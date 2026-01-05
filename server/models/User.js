@@ -62,7 +62,7 @@ const UserSchema = new mongoose.Schema(
     accountNumber: { type: String, trim: true },
     accountName: { type: String, trim: true },
     bankName: { type: String, trim: true },
-    thankYouMessage: { type: String, trim: true },
+    thankYouMessage: { type: String, trim: true, default: "Thank you for your generous contribution!" },
     shareToken: { type: String, index: true, unique: true, sparse: true },
     defaultPlan: { type: String, enum: ["daily", "weekly", "monthly"] },
     wishlists: { type: [WishlistSchema], default: [] },

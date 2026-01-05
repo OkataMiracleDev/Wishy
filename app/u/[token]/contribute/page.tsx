@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function ContributePage({ params }: { params: { token: string } }) {
   const token = params.token;
+  const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [wishlistId, setWishlistId] = useState<string>("");
   const [itemId, setItemId] = useState<string>("");
@@ -28,6 +30,11 @@ export default function ContributePage({ params }: { params: { token: string } }
   const items = useMemo(() => {
     const w = (profile?.wishlists || []).find((x: any) => String(x._id) === String(wishlistId));
     return w?.items || [];
+  }, [profile, wishlistId]);
+
+  const wishlistCurrency = useMemo(() => {
+    const w = (profile?.wishlists || []).find((x: any) => String(x._id) === String(wishlistId));
+    return w?.currency || "";
   }, [profile, wishlistId]);
 
   return (
@@ -69,7 +76,7 @@ export default function ContributePage({ params }: { params: { token: string } }
               <option value="">Choose...</option>
               {items.map((it: any) => (
                 <option key={it._id} value={it._id} className="bg-[#161618]">
-                  {it.name} • {profile?.currency || ""} {Number(it.price).toLocaleString()}
+                  {it.name} • {wishlistCurrency} {Number(it.price).toLocaleString()}
                 </option>
               ))}
             </select>
@@ -143,7 +150,7 @@ export default function ContributePage({ params }: { params: { token: string } }
                 });
                 const data = await res.json().catch(() => ({}));
                 if (data?.ok) {
-                  window.location.href = `/u/${token}/thanks`;
+                  router.push(`/u/${token}/thanks`);
                 }
               } catch (e) {} finally {
                 setIsSubmitting(false);
