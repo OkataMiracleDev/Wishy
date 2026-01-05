@@ -28,6 +28,8 @@ export default function AuthedHomePage() {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deckOrders, setDeckOrders] = useState<Record<string, string[]>>({});
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -58,17 +60,25 @@ export default function AuthedHomePage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this wishlist?")) return;
+    setConfirmDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`${API_URL}/api/wishlist/${id}`, {
+      const res = await fetch(`${API_URL}/api/wishlist/${confirmDeleteId}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (res.ok) {
-        setWishlists((prev) => prev.filter((w) => w._id !== id));
+        setWishlists((prev) => prev.filter((w) => w._id !== confirmDeleteId));
       }
     } catch (e) {
       console.error("Failed to delete", e);
+    } finally {
+      setIsDeleting(false);
+      setConfirmDeleteId("");
     }
   };
 
@@ -288,6 +298,31 @@ export default function AuthedHomePage() {
             ))
           )}
         </div>
+        {confirmDeleteId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="w-full max-w-sm rounded-[2rem] bg-[#161618] p-6 border border-white/10 shadow-2xl">
+              <div className="text-lg font-bold text-white mb-2">Delete Wishlist?</div>
+              <p className="text-sm text-zinc-400 mb-4">This action will remove the wishlist from your dashboard.</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteId("")}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 rounded-xl bg-red-500 px-4 py-3 text-sm font-bold text-white hover:bg-red-600 disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

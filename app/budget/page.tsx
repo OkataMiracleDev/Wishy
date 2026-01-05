@@ -21,6 +21,7 @@ export default function BudgetPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [payments, setPayments] = useState<any[]>([]);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -218,19 +219,7 @@ export default function BudgetPage() {
             {selected && (
                 <button
                 type="button"
-                onClick={async () => {
-                    if(!confirm("Are you sure you want to delete this wishlist?")) return;
-                    setIsSubmitting(true);
-                    const res = await fetch(`${API_URL}/api/wishlist/${selected}`, {
-                    method: "DELETE",
-                    credentials: "include",
-                    });
-                    if (res.ok) {
-                    setWishlists((prev) => prev.filter((w) => w._id !== selected));
-                    setSelected("");
-                    }
-                    setIsSubmitting(false);
-                }}
+                onClick={() => setShowConfirm(true)}
                 className="w-full rounded-xl border border-red-500/20 py-3 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
                 >
                 Delete Selected Wishlist
@@ -239,6 +228,48 @@ export default function BudgetPage() {
           </div>
         </div>
       </div>
+      {selected && showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-[2rem] bg-[#161618] p-6 border border-white/10 shadow-2xl">
+            <div className="text-lg font-bold text-white mb-2">Delete Wishlist?</div>
+            <p className="text-sm text-zinc-400 mb-4">This action will remove the wishlist permanently.</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 rounded-xl border border-white/10 bg白/5 px-4 py-3 text-sm text-white hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={async () => {
+                  setIsSubmitting(true);
+                  try {
+                    const res = await fetch(`${API_URL}/api/wishlist/${selected}`, {
+                      method: "DELETE",
+                      credentials: "include",
+                    });
+                    if (res.ok) {
+                      setWishlists((prev) => prev.filter((w) => w._id !== selected));
+                      setSelected("");
+                    }
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    setIsSubmitting(false);
+                    setShowConfirm(false);
+                  }
+                }}
+                className="flex-1 rounded-xl bg-red-500 px-4 py-3 text-sm font-bold text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {isSubmitting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
