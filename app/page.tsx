@@ -48,7 +48,7 @@ export default function Home() {
           </div>
 
           {/* Mobile Illustration (Visible only on small screens) */}
-          <div className="lg:hidden relative w-64 h-64 my-4">
+          <div className="lg:hidden relative w-64 h-64 -my-22">
             <Image
               src="/onboarding/welcome.png"
               alt="Welcome"
