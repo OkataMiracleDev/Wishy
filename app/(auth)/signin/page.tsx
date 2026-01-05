@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cherryBombOne } from "@/lib/fonts";
 import Image from "next/image";
 import Loader from "@/components/Loader";
+import toast from "react-hot-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -59,7 +60,7 @@ export default function SignInPage() {
         setStep("done");
         setTimeout(() => (window.location.href = "/home"), 1500);
       } else {
-        alert("Invalid credentials");
+        toast.error("Invalid credentials");
         setIsLoading(false);
       }
     } catch (error) {

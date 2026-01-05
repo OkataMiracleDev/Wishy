@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { cherryBombOne } from "@/lib/fonts";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -58,13 +59,14 @@ export default function WishlistPage() {
               });
               if (res.ok) {
                 router.push("/home");
+                toast.success("Wishlist created!");
               } else {
                 console.error("Failed to create wishlist");
-                alert("Something went wrong. Please try again.");
+                toast.error("Something went wrong. Please try again.");
               }
             } catch (e) {
               console.error(e);
-              alert("Error creating wishlist.");
+              toast.error("Error creating wishlist.");
             } finally {
               setIsSubmitting(false);
             }

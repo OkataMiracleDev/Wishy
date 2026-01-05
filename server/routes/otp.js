@@ -83,20 +83,18 @@ router.post("/send", async (req, res) => {
   }
 
   // Set cookies
-  res.cookie("wishy_otp_email", email, {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const cookieOptions = {
     httpOnly: true,
     maxAge: 10 * 60 * 1000, // 10 mins
-    sameSite: "lax", // Adjust based on deployment
-    // secure: process.env.NODE_ENV === 'production'
-  });
-  
-  res.cookie("wishy_otp_code", code, {
-    httpOnly: true,
-    maxAge: 10 * 60 * 1000,
-    sameSite: "lax",
-    // secure: process.env.NODE_ENV === 'production'
-  });
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
+    path: "/"
+  };
 
+  res.cookie("wishy_otp_email", email, cookieOptions);
+  res.cookie("wishy_otp_code", code, cookieOptions);
+  
   return res.json({ ok: true, email_sent: emailSent, testing: !smtpUser });
 });
 
@@ -105,6 +103,13 @@ router.post("/verify", (req, res) => {
   const { email, otp } = req.body;
   const emailCookie = req.cookies.wishy_otp_email;
   const codeCookie = req.cookies.wishy_otp_code;
+
+  console.log("[OTP] Verify request:", { 
+    email, 
+    otp, 
+    cookieEmail: emailCookie, 
+    cookieCode: codeCookie 
+  });
 
   if (!email || !otp || otp.length !== 6) {
     return res.status(400).json({ ok: false, error: "invalid_input" });

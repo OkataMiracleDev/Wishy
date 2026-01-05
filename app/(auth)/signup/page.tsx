@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { cherryBombOne } from "@/lib/fonts";
 import { DIAL_CODES } from "@/lib/dialCodes";
 import Loader from "@/components/Loader";
+import toast from "react-hot-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -139,10 +140,10 @@ export default function SignUpPage() {
         setStep("done");
         setTimeout(() => router.push("/signin"), 3000);
       } else {
-        alert(data.error || "Registration failed");
+        toast.error(data.error || "Registration failed");
       }
     } catch {
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -256,11 +257,12 @@ export default function SignUpPage() {
                     if (res.ok || data.ok) {
                       setOtpSent(true);
                       setStep("verify");
+                      toast.success("OTP sent!");
                     } else {
-                      alert("Failed to send OTP.");
+                      toast.error("Failed to send OTP.");
                     }
                   } catch {
-                    alert("Error sending OTP");
+                    toast.error("Error sending OTP");
                   } finally {
                     setIsSendingOtp(false);
                   }
@@ -301,11 +303,12 @@ export default function SignUpPage() {
                         const data = await res.json().catch(() => ({}));
                         if (res.ok || data.ok) {
                           setOtpSent(true);
+                          toast.success("OTP resent!");
                         } else {
-                          alert("Failed to resend OTP.");
+                          toast.error("Failed to resend OTP.");
                         }
                       } catch {
-                        alert("Error resending OTP");
+                        toast.error("Error resending OTP");
                       } finally {
                         setIsSendingOtp(false);
                       }
@@ -399,7 +402,7 @@ export default function SignUpPage() {
                       body: JSON.stringify({ email, otp }),
                     });
                     if (res.ok) setStep("password");
-                    else alert("Invalid OTP");
+                    else toast.error("Invalid OTP");
                   }}
                   className="flex-1 rounded-2xl bg-[#8B5CF6] py-4 text-white font-semibold shadow-lg shadow-[#8B5CF6]/20 hover:bg-[#7c4dff] disabled:opacity-50"
                 >
