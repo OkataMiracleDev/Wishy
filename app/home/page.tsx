@@ -5,6 +5,15 @@ import { cherryBombOne } from "@/lib/fonts";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+type Item = {
+  _id: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  importance: "low" | "medium" | "high";
+  description?: string;
+};
+
 type Wishlist = {
   _id: string;
   name: string;
@@ -12,11 +21,13 @@ type Wishlist = {
   goal: number;
   currentSaved: number;
   plan: "daily" | "weekly" | "monthly";
+  items?: Item[];
 };
 
 export default function AuthedHomePage() {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deckOrders, setDeckOrders] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     async function load() {
@@ -26,7 +37,18 @@ export default function AuthedHomePage() {
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (data?.wishlists) setWishlists(data.wishlists);
+        if (data?.wishlists) {
+          setWishlists(data.wishlists);
+          const initial: Record<string, string[]> = {};
+          for (const w of data.wishlists as Wishlist[]) {
+            const sorted = [...(w.items || [])].sort((a, b) => {
+              const order = { high: 3, medium: 2, low: 1 } as any;
+              return order[b.importance] - order[a.importance] || b.price - a.price;
+            });
+            initial[w._id] = sorted.map((it) => it._id);
+          }
+          setDeckOrders(initial);
+        }
       } catch {
       } finally {
         setIsLoading(false);
@@ -189,6 +211,79 @@ export default function AuthedHomePage() {
                     />
                   </div>
                 </div>
+
+                {/* Item Swipe Deck */}
+                {w.items && w.items.length > 0 ? (
+                  <div className="relative z-0 mt-6 h-[260px]">
+                    {(deckOrders[w._id] || []).map((idRef, idx) => {
+                      const it = (w.items || []).find((x) => x._id === idRef) || (w.items || [])[idx];
+                      const offset = (deckOrders[w._id] || []).length - idx - 1;
+                      const rotate = idx === (deckOrders[w._id] || []).length - 1 ? 0 : -3 + Math.random() * 6;
+                      return (
+                        <div
+                          key={it?._id || `${w._id}-${idx}`}
+                          className="absolute inset-0 rounded-2xl border border-white/10 bg-[#101011] shadow-xl"
+                          style={{
+                            transform: `translateY(${offset * 10}px) rotate(${rotate}deg)`,
+                            zIndex: 5 + idx,
+                          }}
+                          onPointerDown={(e) => {
+                            const target = e.currentTarget as HTMLDivElement;
+                            const startX = e.clientX;
+                            const startY = e.clientY;
+                            let moved = false;
+                            function move(ev: PointerEvent) {
+                              moved = true;
+                              const dx = ev.clientX - startX;
+                              const dy = ev.clientY - startY;
+                              target.style.transform = `translate(${dx}px, ${dy}px) rotate(${rotate}deg)`;
+                              target.style.transition = "none";
+                            }
+                            function up(ev: PointerEvent) {
+                              document.removeEventListener("pointermove", move);
+                              document.removeEventListener("pointerup", up);
+                              if (moved) {
+                                const dx = ev.clientX - startX;
+                                if (dx > 80) {
+                                  const order = [...(deckOrders[w._id] || [])];
+                                  order.splice(idx, 1);
+                                  order.push(idRef);
+                                  setDeckOrders((prev) => ({ ...prev, [w._id]: order }));
+                                  return;
+                                }
+                              }
+                              target.style.transform = `translateY(${offset * 10}px) rotate(${rotate}deg)`;
+                              target.style.transition = "transform 200ms ease";
+                            }
+                            document.addEventListener("pointermove", move);
+                            document.addEventListener("pointerup", up);
+                          }}
+                        >
+                          {it ? (
+                            <div className="p-4 h-full flex flex-col">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="text-xs text-purple-400 font-semibold uppercase tracking-wider">{it.importance}</div>
+                                <div className="text-xs text-zinc-400">{w.currency} {Number(it.price).toLocaleString()}</div>
+                              </div>
+                              <div className="text-lg font-bold text-white mb-2">{it.name}</div>
+                              {it.description ? (
+                                <div className="text-xs text-zinc-400 mb-3 line-clamp-3">{it.description}</div>
+                              ) : null}
+                              <div className="flex-1 rounded-xl bg-black/20 border border-white/10 overflow-hidden">
+                                {it.imageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={it.imageUrl} alt={it.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-zinc-600">No image</div>
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             ))
           )}

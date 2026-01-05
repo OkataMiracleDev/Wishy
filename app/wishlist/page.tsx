@@ -80,7 +80,7 @@ export default function WishlistPage() {
             <input
               id="name"
               type="text"
-              placeholder="e.g. New Macbook Pro"
+              placeholder="e.g Content Creation"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"

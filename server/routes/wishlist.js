@@ -96,7 +96,7 @@ router.post("/create", upload.single('image'), async (req, res) => {
 router.post("/item/add", upload.single('image'), async (req, res) => {
   const email = getEmailFromSession(req);
   if (!email) return res.status(401).json({ ok: false });
-  const { wishlistId, name, price, importance } = req.body;
+  const { wishlistId, name, price, importance, description } = req.body;
   if (!wishlistId || !name || !price) {
     return res.status(400).json({ ok: false, error: "invalid_input" });
   }
@@ -120,6 +120,7 @@ router.post("/item/add", upload.single('image'), async (req, res) => {
     price: Number(price),
     importance: importance || "medium",
     imageUrl,
+    description: description ? String(description).trim() : "",
   });
   w.goal = (w.items || []).reduce((sum, it) => sum + Number(it.price || 0), 0);
   await user.save();

@@ -24,27 +24,54 @@ router.post("/ask", async (req, res) => {
       model = "mixtral-8x7b-32768";
     }
 
-    const response = await fetch(apiUrl, {
+    const payload = {
+      messages: [
+        { role: "system", content: "You are Wiley Wishy, a friendly personal finance assistant. Answer the user's specific question directly with concise, actionable guidance. Avoid generic templates. Only propose budget splits (e.g., 50/30/20) or weekly schedules if the user explicitly asks for a plan. Prefer NGN examples when the context suggests Nigeria; otherwise use USD. Keep it practical and tailored." },
+        { role: "user", content: question }
+      ],
+      model: model,
+      stream: false,
+      temperature: 0.7,
+      max_tokens: 800,
+      top_p: 0.95
+    };
+
+    let response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        messages: [
-          { role: "system", content: "You are Wiley Wishy, an expert assistant on savings, budgeting, personal finance, and investing. Give clear, practical, step-by-step guidance tailored to the user's scenario. Keep answers concise, friendly, and actionable. Use NGN examples when the user is in Nigeria; otherwise default to USD. When asked for plans, provide a simple budget split (e.g., 50/30/20) and a weekly saving schedule. Avoid disclaimers; be decisive but prudent." },
-          { role: "user", content: question }
-        ],
-        model: model,
-        stream: false,
-        temperature: 0.7
-      })
+      body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
-    let answer = data.choices?.[0]?.message?.content;
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      data = {};
+    }
+    let answer = data?.choices?.[0]?.message?.content;
+    if ((!response.ok || !answer) && apiUrl.includes("groq")) {
+      model = "llama3-70b-8192";
+      payload.model = model;
+      response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = {};
+      }
+      answer = data?.choices?.[0]?.message?.content;
+    }
     if (!answer || typeof answer !== "string" || !answer.trim()) {
-      answer = "Here’s a practical plan:\n- Use a simple 50/30/20 budget: 50% needs, 30% wants, 20% savings/debt.\n- Set a weekly auto-transfer to savings. Example: ₦5,000/week if aiming for ₦260,000/year.\n- Build a 3–6 month emergency fund first.\n- Invest gradually in broad, low-cost index funds (or money market funds if you need short-term safety).\n- Track all spending; adjust targets monthly based on actuals.";
+      answer = "I couldn't fetch an answer right now. Please try again in a moment.";
     }
     
     return res.json({ answer });

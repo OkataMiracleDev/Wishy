@@ -6,6 +6,7 @@ const WishlistItemSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     imageUrl: { type: String, trim: true },
     importance: { type: String, enum: ["low", "medium", "high"], default: "medium" },
+    description: { type: String, trim: true },
   },
   { _id: true, timestamps: true }
 );

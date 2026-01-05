@@ -12,6 +12,7 @@ type Item = {
   price: number;
   imageUrl?: string;
   importance: "low" | "medium" | "high";
+  description?: string;
 };
 
 export default function WishlistItemsPage() {
@@ -25,6 +26,7 @@ export default function WishlistItemsPage() {
   const [price, setPrice] = useState<string | number>("");
   const [importance, setImportance] = useState<"low" | "medium" | "high">("medium");
   const [image, setImage] = useState<File | null>(null);
+  const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -53,6 +55,10 @@ export default function WishlistItemsPage() {
   }, [items]);
 
   const deckRef = useRef<HTMLDivElement>(null);
+  const [deckOrder, setDeckOrder] = useState<string[]>([]);
+  useEffect(() => {
+    setDeckOrder(stack.map((it) => it._id));
+  }, [stack]);
 
   const handleAddItem = async () => {
     if (!name || !price) return;
@@ -63,6 +69,7 @@ export default function WishlistItemsPage() {
       formData.append("name", name);
       formData.append("price", String(price));
       formData.append("importance", importance);
+      formData.append("description", description);
       if (image) formData.append("image", image);
       const res = await fetch(`${API_URL}/api/wishlist/item/add`, {
         method: "POST",
@@ -76,6 +83,7 @@ export default function WishlistItemsPage() {
         setPrice("");
         setImportance("medium");
         setImage(null);
+        setDescription("");
       }
     } catch (e) {} finally {
       setIsSubmitting(false);
@@ -134,6 +142,15 @@ export default function WishlistItemsPage() {
                 className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
               />
             </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs font-medium text-zinc-400 ml-1">Description</label>
+              <textarea
+                placeholder="Details about this item..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors min-h-[80px]"
+              />
+            </div>
             <div>
               <label className="text-xs font-medium text-zinc-400 ml-1">Importance</label>
               <div className="flex gap-2">
@@ -175,9 +192,10 @@ export default function WishlistItemsPage() {
         </div>
 
         <div ref={deckRef} className="relative h-[420px] w-full">
-          {stack.map((it, idx) => {
-            const offset = stack.length - idx - 1;
-            const rotate = idx === stack.length - 1 ? 0 : -3 + Math.random() * 6;
+          {deckOrder.map((idRef, idx) => {
+            const it = items.find((x) => x._id === idRef) || stack[idx];
+            const offset = deckOrder.length - idx - 1;
+            const rotate = idx === deckOrder.length - 1 ? 0 : -3 + Math.random() * 6;
             return (
               <div
                 key={it._id}
@@ -203,9 +221,11 @@ export default function WishlistItemsPage() {
                     document.removeEventListener("pointerup", up);
                     if (moved) {
                       const dx = ev.clientX - startX;
-                      if (Math.abs(dx) > 80) {
-                        const newOrder = [...stack.slice(0, idx), ...stack.slice(idx + 1), it];
-                        setItems(newOrder);
+                      if (dx > 80) {
+                        const idList = [...deckOrder];
+                        idList.splice(idx, 1);
+                        idList.push(it._id);
+                        setDeckOrder(idList);
                         return;
                       }
                     }
@@ -222,6 +242,9 @@ export default function WishlistItemsPage() {
                     <div className="text-sm text-zinc-400">{currency} {Number(it.price).toLocaleString()}</div>
                   </div>
                   <div className="text-2xl font-bold text-white mb-4">{it.name}</div>
+                  {it.description ? (
+                    <div className="text-sm text-zinc-400 mb-4">{it.description}</div>
+                  ) : null}
                   <div className="flex-1 rounded-2xl bg-black/20 border border-white/10 overflow-hidden">
                     {it.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -234,7 +257,7 @@ export default function WishlistItemsPage() {
               </div>
             );
           })}
-          {stack.length === 0 && (
+          {deckOrder.length === 0 && (
             <div className="absolute inset-0 rounded-[2rem] border border-dashed border-white/10 bg-[#161618] flex items-center justify-center text-zinc-500">
               No items yet. Add your first item above.
             </div>
