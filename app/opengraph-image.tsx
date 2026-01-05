@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/server";
+export const runtime = "edge";
 
 export const size = {
   width: 1200,
@@ -72,4 +73,3 @@ export default function OpengraphImage() {
     { size }
   );
 }
-

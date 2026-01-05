@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/server";
+export const runtime = "edge";
 
 export const size = {
   width: 180,
@@ -29,4 +30,3 @@ export default function AppleIcon() {
     { size }
   );
 }
-

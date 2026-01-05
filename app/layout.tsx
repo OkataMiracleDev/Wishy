@@ -41,8 +41,8 @@ export const metadata: Metadata = {
     canonical: "https://wishy-app.vercel.app/",
   },
   icons: {
-    icon: [{ url: "/favicon.ico" }, { url: "/icon.png" }],
-    apple: [{ url: "/apple-icon.png" }],
+    icon: [{ url: "/favicon.ico" }, { url: "/icon" }],
+    apple: [{ url: "/apple-icon" }],
     shortcut: ["/favicon.ico"],
   },
   themeColor: "#0a0a0a",

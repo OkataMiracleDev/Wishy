@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/server";
+export const runtime = "edge";
 
 export const size = {
   width: 800,
@@ -57,4 +58,3 @@ export default function TwitterImage() {
     { size }
   );
 }
-
