@@ -16,7 +16,7 @@ export default function BottomNav() {
   // Hide on public share pages: /u/<token> and /<username>/<hex-code>(/contribute|/thanks)?
   const isPublicShare =
     pathname.startsWith("/u/") ||
-    /^\/[^\/]+\/[a-f0-9]{5,10}(?:\/.*)?$/.test(pathname);
+    /^\/[A-Za-z0-9._-]+\/[a-f0-9]{10,64}(?:\/.*)?$/.test(pathname);
   if (isPublicShare) {
     return null;
   }
