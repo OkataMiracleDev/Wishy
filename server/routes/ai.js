@@ -8,75 +8,70 @@ router.post("/ask", async (req, res) => {
     const { question } = req.body;
     if (!question) return res.status(400).json({ error: "No question provided" });
 
-    const apiKey = process.env.XAI_API_KEY;
-    if (!apiKey) {
-      return res.json({ 
-        answer: "I'm ready to help! Please set the XAI_API_KEY in your server .env file to enable AI." 
-      });
-    }
+    const xaiKey = process.env.XAI_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY || (xaiKey && xaiKey.startsWith("gsk_") ? xaiKey : "");
+    const openaiKey = process.env.OPENAI_API_KEY;
 
-    let apiUrl = "https://api.x.ai/v1/chat/completions";
-    let model = "grok-beta";
+    const baseMessages = [
+      { role: "system", content: "You are Wiley Wishy, a friendly personal finance assistant. Answer the user's specific question directly with concise, actionable guidance. Avoid generic templates. Only propose budget splits (e.g., 50/30/20) or weekly schedules if the user explicitly asks for a plan. Prefer NGN examples when the context suggests Nigeria; otherwise use USD. Keep it practical and tailored." },
+      { role: "user", content: question }
+    ];
 
-    // Auto-detect Groq key
-    if (apiKey.startsWith("gsk_")) {
-      apiUrl = "https://api.groq.com/openai/v1/chat/completions";
-      model = "mixtral-8x7b-32768";
-    }
-
-    const payload = {
-      messages: [
-        { role: "system", content: "You are Wiley Wishy, a friendly personal finance assistant. Answer the user's specific question directly with concise, actionable guidance. Avoid generic templates. Only propose budget splits (e.g., 50/30/20) or weekly schedules if the user explicitly asks for a plan. Prefer NGN examples when the context suggests Nigeria; otherwise use USD. Keep it practical and tailored." },
-        { role: "user", content: question }
-      ],
-      model: model,
-      stream: false,
-      temperature: 0.7,
-      max_tokens: 800,
-      top_p: 0.95
-    };
-
-    let response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (e) {
-      data = {};
-    }
-    let answer = data?.choices?.[0]?.message?.content;
-    if ((!response.ok || !answer) && apiUrl.includes("groq")) {
-      model = "llama3-70b-8192";
-      payload.model = model;
-      response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(payload)
-      });
+    async function callProvider({ url, key, model }) {
+      if (!key) return null;
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 18000);
       try {
-        data = await response.json();
-      } catch (e) {
-        data = {};
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+          body: JSON.stringify({ messages: baseMessages, model, stream: false, temperature: 0.7, max_tokens: 800, top_p: 0.95 }),
+          signal: controller.signal
+        });
+        clearTimeout(t);
+        let json;
+        try {
+          json = await resp.json();
+        } catch {
+          json = {};
+        }
+        const msg = json?.choices?.[0]?.message?.content;
+        if (resp.ok && msg && typeof msg === "string" && msg.trim()) return msg;
+        return null;
+      } catch {
+        clearTimeout(t);
+        return null;
       }
-      answer = data?.choices?.[0]?.message?.content;
     }
-    if (!answer || typeof answer !== "string" || !answer.trim()) {
-      answer = "I couldn't fetch an answer right now. Please try again in a moment.";
+
+    let answer = null;
+
+    if (openaiKey) {
+      answer = await callProvider({ url: "https://api.openai.com/v1/chat/completions", key: openaiKey, model: "gpt-4o-mini" })
+        || await callProvider({ url: "https://api.openai.com/v1/chat/completions", key: openaiKey, model: "gpt-3.5-turbo-0125" });
     }
-    
+    if (!answer && groqKey) {
+      answer = await callProvider({ url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "mixtral-8x7b-32768" })
+        || await callProvider({ url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey, model: "llama3-70b-8192" });
+    }
+    if (!answer && xaiKey && !xaiKey.startsWith("gsk_")) {
+      answer = await callProvider({ url: "https://api.x.ai/v1/chat/completions", key: xaiKey, model: "grok-beta" })
+        || await callProvider({ url: "https://api.x.ai/v1/chat/completions", key: xaiKey, model: "grok-2-latest" });
+    }
+
+    if (!answer) {
+      const offline = [
+        "Here’s a practical approach:",
+        "- Clarify the goal and timeline.",
+        "- Estimate total cost and monthly capacity.",
+        "- Allocate a fixed amount per pay cycle and track progress.",
+        "- Cut one discretionary expense and redirect it toward the goal.",
+        "Ask for a specific plan if you want schedules or budget splits."
+      ].join("\n");
+      return res.json({ answer: offline });
+    }
     return res.json({ answer });
   } catch (error) {
-    console.error("AI Error:", error);
     return res.status(500).json({ error: "Failed to get answer" });
   }
 });

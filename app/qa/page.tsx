@@ -14,15 +14,22 @@ export default function QAPage() {
     setIsLoading(true);
     setAnswer(null);
     try {
-      const res = await fetch(`${API_URL}/api/ai/ask`, {
+      let res = await fetch(`${API_URL}/api/ai/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
-      const data = await res.json();
-      setAnswer(data.answer || "No answer found.");
+      if (!res.ok) {
+        res = await fetch(`/api/ai/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        }).catch(() => res);
+      }
+      const data = await res.json().catch(() => ({} as any));
+      setAnswer(data.answer || "No answer found. Please try again.");
     } catch (e) {
-      setAnswer("Something went wrong. Please try again.");
+      setAnswer("Wiley couldn’t connect right now. Please try again in a moment.");
     } finally {
       setIsLoading(false);
     }

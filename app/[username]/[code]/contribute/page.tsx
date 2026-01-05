@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function ContributePage({ params }: { params: { username: string; code: string } }) {
+export default function ContributePage() {
+  const params = useParams() as { username: string; code: string };
   const token = params.code;
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
@@ -19,6 +20,9 @@ export default function ContributePage({ params }: { params: { username: string;
 
   useEffect(() => {
     async function load() {
+      if (!token || typeof token !== "string" || token.length === 0) {
+        return;
+      }
       const res = await fetch(`${API_URL}/api/public/profile/${token}`);
       const data = await res.json().catch(() => ({}));
       if (data?.profile) setProfile(data.profile);

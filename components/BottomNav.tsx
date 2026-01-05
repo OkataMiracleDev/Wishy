@@ -13,10 +13,10 @@ export default function BottomNav() {
     return null;
   }
 
-  // Hide on public share pages: /u/<token> and /<username>/<hex-code>(/contribute|/thanks)?
-  const isPublicShare =
-    pathname.startsWith("/u/") ||
-    /^\/[A-Za-z0-9._-]+\/[a-f0-9]{10,64}(?:\/.*)?$/.test(pathname);
+  const knownRoots = new Set(["home", "budget", "qa", "profile", "wishlist", "signin", "signup"]);
+  const segments = pathname.split("/").filter(Boolean);
+  const isUsernameShare = segments.length >= 2 && !knownRoots.has(segments[0]);
+  const isPublicShare = pathname.startsWith("/u/") || isUsernameShare;
   if (isPublicShare) {
     return null;
   }

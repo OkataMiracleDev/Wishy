@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function PublicProfilePage({ params }: { params: { token: string } }) {
+export default function PublicProfilePage() {
+  const params = useParams() as { token: string };
   const token = params.token;
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -13,6 +15,11 @@ export default function PublicProfilePage({ params }: { params: { token: string 
     async function load() {
       setLoading(true);
       setError(null);
+      if (!token || typeof token !== "string" || token.length === 0) {
+        setError("Link is invalid or the profile is unavailable.");
+        setLoading(false);
+        return;
+      }
       try {
         let res = await fetch(`${API_URL}/api/public/profile/${token}`);
         if (!res.ok) {

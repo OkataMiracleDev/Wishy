@@ -7,6 +7,9 @@ export default function ThanksPage({ params }: { params: { token: string } }) {
   const [message, setMessage] = useState("Thank you for your generous contribution!");
   useEffect(() => {
     async function load() {
+      if (!params.token || typeof params.token !== "string" || params.token.length === 0) {
+        return;
+      }
       try {
         const res = await fetch(`${API_URL}/api/public/profile/${params.token}`);
         const data = await res.json().catch(() => ({}));
