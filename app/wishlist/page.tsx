@@ -13,7 +13,9 @@ export default function WishlistPage() {
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("NGN");
   const [plan, setPlan] = useState<"daily" | "weekly" | "monthly" | null>(null);
-  const [importance, setImportance] = useState<"low" | "medium" | "high">("medium");
+  const [importance, setImportance] = useState<"low" | "medium" | "high">(
+    "medium"
+  );
   const [image, setImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,11 +51,18 @@ export default function WishlistPage() {
                 formData.append("image", image);
               }
 
-              const res = await fetch(`${API_URL}/api/wishlist/create`, {
+              let res = await fetch(`/api/wishlist/create`, {
                 method: "POST",
                 credentials: "include",
                 body: formData,
-              });
+              }).catch(() => null as any);
+              if (!res || !res.ok) {
+                res = await fetch(`${API_URL}/api/wishlist/create`, {
+                  method: "POST",
+                  credentials: "include",
+                  body: formData,
+                });
+              }
               if (res.ok) {
                 router.push("/home");
                 toast.success("Wishlist created!");
@@ -136,8 +145,6 @@ export default function WishlistPage() {
               </div>
             </div>
           </div>
-
-          
 
           <div className="space-y-2">
             <span className="text-xs font-medium text-zinc-400 ml-1">
