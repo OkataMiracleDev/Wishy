@@ -25,7 +25,10 @@ export default function ProfilePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API_URL}/api/profile/me`, { credentials: "include" });
+        let res = await fetch(`/api/profile/me`, { credentials: "include" }).catch(() => null as any);
+        if (!res || !res.ok) {
+          res = await fetch(`${API_URL}/api/profile/me`, { credentials: "include" });
+        }
         if (!res.ok) {
            if (res.status === 401) {
              router.push("/signin");
@@ -56,7 +59,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await fetch(`${API_URL}/api/profile/update`, {
+      let res = await fetch(`/api/profile/update`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -66,7 +69,20 @@ export default function ProfilePage() {
           bankName,
           thankYouMessage,
         }),
-      });
+      }).catch(() => null as any);
+      if (!res || !res.ok) {
+        await fetch(`${API_URL}/api/profile/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            accountNumber,
+            accountName,
+            bankName,
+            thankYouMessage,
+          }),
+        });
+      }
       setUser((prev: any) => ({
         ...(prev || {}),
         accountNumber,
@@ -83,10 +99,16 @@ export default function ProfilePage() {
 
   const handleShare = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/profile/share`, {
+      let res = await fetch(`/api/profile/share`, {
         method: "POST",
         credentials: "include",
-      });
+      }).catch(() => null as any);
+      if (!res || !res.ok) {
+        res = await fetch(`${API_URL}/api/profile/share`, {
+          method: "POST",
+          credentials: "include",
+        });
+      }
       const data = await res.json().catch(() => ({}));
       if (data?.shareUrl) {
         setShareUrl(data.shareUrl);

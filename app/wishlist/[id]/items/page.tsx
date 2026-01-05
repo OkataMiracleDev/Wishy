@@ -60,6 +60,23 @@ export default function WishlistItemsPage() {
     setDeckOrder(stack.map((it) => it._id));
   }, [stack]);
 
+  const nextCard = () => {
+    setDeckOrder((prev) => {
+      const list = [...prev];
+      const first = list.shift();
+      if (first) list.push(first);
+      return list;
+    });
+  };
+  const prevCard = () => {
+    setDeckOrder((prev) => {
+      const list = [...prev];
+      const last = list.pop();
+      if (last) list.unshift(last);
+      return list;
+    });
+  };
+
   const handleAddItem = async () => {
     if (!name || !price) return;
     setIsSubmitting(true);
@@ -117,6 +134,24 @@ export default function WishlistItemsPage() {
           >
             Back
           </button>
+        </div>
+        <div className="relative h-0">
+          <div className="absolute -top-10 right-0 flex gap-2">
+            <button
+              type="button"
+              onClick={prevCard}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white hover:bg-white/10"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={nextCard}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white hover:bg-white/10"
+            >
+              Next
+            </button>
+          </div>
         </div>
 
         <div className="rounded-[2rem] bg-[#161618] p-6 border border-white/5 shadow-xl mb-8">

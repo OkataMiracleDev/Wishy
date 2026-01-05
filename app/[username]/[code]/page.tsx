@@ -11,6 +11,7 @@ export default function PublicProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deckOrder, setDeckOrder] = useState<string[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -27,7 +28,17 @@ export default function PublicProfilePage() {
           res = await fetch(`/api/public/profile/${token}`).catch(() => res);
         }
         const data = await res.json().catch(() => ({}));
-        if (data?.profile) setProfile(data.profile);
+        if (data?.profile) {
+          setProfile(data.profile);
+          const all = (data.profile.wishlists || []).flatMap((w: any) =>
+            (w.items || []).map((it: any) => ({
+              ...it,
+              _id: String(it._id),
+              currency: w.currency,
+            }))
+          );
+          setDeckOrder(all.map((x: any) => x._id));
+        }
         else setError("Link is invalid or the profile is unavailable.");
       } catch (e) {
         setError("We couldn’t load this profile. Please try again later.");
@@ -37,6 +48,23 @@ export default function PublicProfilePage() {
     }
     load();
   }, [token]);
+
+  const nextCard = () => {
+    setDeckOrder((prev) => {
+      const list = [...prev];
+      const first = list.shift();
+      if (first) list.push(first);
+      return list;
+    });
+  };
+  const prevCard = () => {
+    setDeckOrder((prev) => {
+      const list = [...prev];
+      const last = list.pop();
+      if (last) list.unshift(last);
+      return list;
+    });
+  };
 
   return (
     <main className="min-h-dvh w-full bg-[#0a0a0a] text-white">
@@ -91,6 +119,105 @@ export default function PublicProfilePage() {
               >
                 Contribute
               </a>
+            </div>
+            <div className="rounded-[2rem] bg-[#161618] p-6 border border-white/5 shadow-xl">
+              <div className="mb-3 text-sm text-zinc-400">Items</div>
+              <div className="relative h-[360px] w-full">
+                {deckOrder.map((idRef, idx) => {
+                  const all = (profile.wishlists || []).flatMap((w: any) =>
+                    (w.items || []).map((it: any) => ({
+                      ...it,
+                      _id: String(it._id),
+                      currency: w.currency,
+                    }))
+                  );
+                  const it = all.find((x: any) => x._id === idRef) || all[idx];
+                  if (!it) return null;
+                  const offset = deckOrder.length - idx - 1;
+                  const rotate = idx === deckOrder.length - 1 ? 0 : -2 + Math.random() * 4;
+                  return (
+                    <div
+                      key={`${it._id}-${idx}`}
+                      className="absolute inset-0 rounded-[1.5rem] border border-white/10 bg-[#121214] shadow-xl touch-pan-y"
+                      style={{
+                        transform: `translateY(${offset * 10}px) rotate(${rotate}deg)`,
+                        zIndex: 10 + idx,
+                      }}
+                      onPointerDown={(e) => {
+                        const target = e.currentTarget;
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        let moved = false;
+                        function move(ev: PointerEvent) {
+                          moved = true;
+                          const dx = ev.clientX - startX;
+                          const dy = ev.clientY - startY;
+                          target.style.transform = `translate(${dx}px, ${dy}px) rotate(${rotate}deg)`;
+                          target.style.transition = "none";
+                        }
+                        function up(ev: PointerEvent) {
+                          document.removeEventListener("pointermove", move);
+                          document.removeEventListener("pointerup", up);
+                          if (moved) {
+                            const dx = ev.clientX - startX;
+                            if (dx > 80) {
+                              const idList = [...deckOrder];
+                              idList.splice(idx, 1);
+                              idList.push(String(it._id));
+                              setDeckOrder(idList);
+                              return;
+                            }
+                          }
+                          target.style.transform = `translateY(${offset * 10}px) rotate(${rotate}deg)`;
+                          target.style.transition = "transform 200ms ease";
+                        }
+                        document.addEventListener("pointermove", move);
+                        document.addEventListener("pointerup", up);
+                      }}
+                    >
+                      <div className="p-5 flex flex-col h-full">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-xs text-purple-400 font-semibold uppercase tracking-wider">{it.importance}</div>
+                          <div className="text-xs text-zinc-400">{it.currency} {Number(it.price).toLocaleString()}</div>
+                        </div>
+                        <div className="text-xl font-bold text-white mb-3">{it.name}</div>
+                        {it.description ? (
+                          <div className="text-sm text-zinc-400 mb-3">{it.description}</div>
+                        ) : null}
+                        <div className="flex-1 rounded-xl bg-black/20 border border-white/10 overflow-hidden">
+                          {it.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={it.imageUrl} alt={it.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-zinc-600">No image</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {deckOrder.length === 0 && (
+                  <div className="absolute inset-0 rounded-[1.5rem] border border-dashed border-white/10 bg-[#121214] flex items-center justify-center text-zinc-500">
+                    No items available.
+                  </div>
+                )}
+                <div className="absolute bottom-3 right-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={prevCard}
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white hover:bg-white/10"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextCard}
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white hover:bg-white/10"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : null}

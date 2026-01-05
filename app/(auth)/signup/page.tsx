@@ -122,19 +122,34 @@ export default function SignUpPage() {
   const handleRegister = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/signup`, {
+      let res = await fetch(`/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           email,
           fullname,
-          phoneNumber, // Corrected field name to match backend expectation often 'phoneNumber' or 'phone' depending on schema
+          phoneNumber,
           nickname,
           password,
           countryCode: selectedCca2,
         }),
-      });
+      }).catch(() => null as any);
+      if (!res || !res.ok) {
+        res = await fetch(`${API_URL}/api/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email,
+            fullname,
+            phoneNumber,
+            nickname,
+            password,
+            countryCode: selectedCca2,
+          }),
+        });
+      }
       const data = await res.json();
       if (res.ok) {
         setStep("done");
@@ -247,12 +262,20 @@ export default function SignUpPage() {
                 onClick={async () => {
                   setIsSendingOtp(true);
                   try {
-                    const res = await fetch(`${API_URL}/api/otp/send`, {
+                    let res = await fetch(`/api/otp/send`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       credentials: "include",
                       body: JSON.stringify({ email }),
-                    });
+                    }).catch(() => null as any);
+                    if (!res || !res.ok) {
+                      res = await fetch(`${API_URL}/api/otp/send`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ email }),
+                      });
+                    }
                     const data = await res.json().catch(() => ({}));
                     if (res.ok || data.ok) {
                       setOtpSent(true);
@@ -294,12 +317,20 @@ export default function SignUpPage() {
                     onClick={async () => {
                       setIsSendingOtp(true);
                       try {
-                        const res = await fetch(`${API_URL}/api/otp/send`, {
+                        let res = await fetch(`/api/otp/send`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           credentials: "include",
                           body: JSON.stringify({ email }),
-                        });
+                        }).catch(() => null as any);
+                        if (!res || !res.ok) {
+                          res = await fetch(`${API_URL}/api/otp/send`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify({ email }),
+                          });
+                        }
                         const data = await res.json().catch(() => ({}));
                         if (res.ok || data.ok) {
                           setOtpSent(true);
@@ -395,12 +426,20 @@ export default function SignUpPage() {
                     !fullname
                   }
                   onClick={async () => {
-                    const res = await fetch(`${API_URL}/api/otp/verify`, {
+                    let res = await fetch(`/api/otp/verify`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       credentials: "include",
                       body: JSON.stringify({ email, otp }),
-                    });
+                    }).catch(() => null as any);
+                    if (!res || !res.ok) {
+                      res = await fetch(`${API_URL}/api/otp/verify`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ email, otp }),
+                      });
+                    }
                     if (res.ok) setStep("password");
                     else toast.error("Invalid OTP");
                   }}
@@ -430,15 +469,20 @@ export default function SignUpPage() {
                     if (!nickname) return;
                     setNicknameChecking(true);
                     try {
-                      const res = await fetch(
-                        `${API_URL}/api/auth/check-nickname`,
-                        {
+                      let res = await fetch(`/api/auth/check-nickname`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ nickname }),
+                      }).catch(() => null as any);
+                      if (!res || !res.ok) {
+                        res = await fetch(`${API_URL}/api/auth/check-nickname`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           credentials: "include",
                           body: JSON.stringify({ nickname }),
-                        }
-                      );
+                        });
+                      }
                       const data = await res.json();
                       setNicknameAvailable(data.available);
                     } catch {

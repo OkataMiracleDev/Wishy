@@ -43,8 +43,9 @@ router.post("/signup", async (req, res) => {
     res.cookie("wishy_session", token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
+      path: "/",
     });
 
     return res.json({ ok: true, email: newUser.email });
@@ -79,8 +80,9 @@ router.post("/signin", async (req, res) => {
     res.cookie("wishy_session", token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
+      path: "/",
     });
 
     return res.json({ ok: true, email: user.email });
@@ -153,7 +155,7 @@ router.get("/me", (req, res) => {
 
 // Signout
 router.post("/signout", (req, res) => {
-  res.clearCookie("wishy_session");
+  res.clearCookie("wishy_session", { sameSite: "lax", secure: true, path: "/" });
   return res.json({ ok: true });
 });
 

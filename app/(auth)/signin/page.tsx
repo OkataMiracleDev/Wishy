@@ -27,12 +27,20 @@ export default function SignInPage() {
     setEmailError("");
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/check-email`, {
+      let res = await fetch(`/api/auth/check-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email }),
-      });
+      }).catch(() => null as any);
+      if (!res || !res.ok) {
+        res = await fetch(`${API_URL}/api/auth/check-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email }),
+        });
+      }
       const data = await res.json();
       if (data.exists) {
         setStep("password");
@@ -50,12 +58,20 @@ export default function SignInPage() {
   const handleSignIn = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/signin`, {
+      let res = await fetch(`/api/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email, password }),
-      });
+      }).catch(() => null as any);
+      if (!res || !res.ok) {
+        res = await fetch(`${API_URL}/api/auth/signin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        });
+      }
       if (res.ok) {
         setStep("done");
         setTimeout(() => (window.location.href = "/home"), 1500);
