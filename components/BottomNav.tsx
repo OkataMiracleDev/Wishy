@@ -13,6 +13,14 @@ export default function BottomNav() {
     return null;
   }
 
+  // Hide on public share pages: /u/<token> and /<username>/<hex-code>(/contribute|/thanks)?
+  const isPublicShare =
+    pathname.startsWith("/u/") ||
+    /^\/[^\/]+\/[a-f0-9]{5,10}(?:\/.*)?$/.test(pathname);
+  if (isPublicShare) {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-4 left-0 right-0 z-50 flex items-center justify-center pointer-events-none">
       <nav className="flex w-full max-w-sm items-center justify-around rounded-full bg-black/40 px-6 py-3 text-xs text-white pointer-events-auto backdrop-blur-md">

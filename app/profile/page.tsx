@@ -16,6 +16,11 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const isDirty =
+    (user?.accountNumber || "") !== accountNumber ||
+    (user?.accountName || "") !== accountName ||
+    (user?.bankName || "") !== bankName ||
+    (user?.thankYouMessage || "") !== thankYouMessage;
 
   useEffect(() => {
     async function load() {
@@ -62,7 +67,13 @@ export default function ProfilePage() {
           thankYouMessage,
         }),
       });
-      // Optional: Show success toast
+      setUser((prev: any) => ({
+        ...(prev || {}),
+        accountNumber,
+        accountName,
+        bankName,
+        thankYouMessage,
+      }));
     } catch (e) {
       console.error("Failed to save", e);
     } finally {
@@ -218,7 +229,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || !isDirty}
                 className="flex-1 rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-zinc-200 transition-colors disabled:opacity-50"
               >
                 {isSaving ? "Saving..." : "Save Changes"}
