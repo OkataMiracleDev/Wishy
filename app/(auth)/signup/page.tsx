@@ -1,10 +1,12 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cherryBombOne } from "@/lib/fonts";
 import { DIAL_CODES } from "@/lib/dialCodes";
+import Loader from "@/components/Loader";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -12,16 +14,7 @@ export default function SignUpPage() {
   const [step, setStep] = useState<"email" | "verify" | "password" | "done">(
     "email"
   );
-  const [countries, setCountries] = useState<
-    Array<{
-      name: string;
-      cca2: string;
-      cca3: string;
-      dial: string;
-      dials: string[];
-      currency?: string;
-    }>
-  >([]);
+  const [countries, setCountries] = useState<any[]>([]);
   const [selectedCca2, setSelectedCca2] = useState<string>("NG");
   const [dialCodes, setDialCodes] = useState<string[]>(
     Array.from(new Set(DIAL_CODES)).sort((a, b) => a.localeCompare(b))
@@ -32,9 +25,6 @@ export default function SignUpPage() {
   const [otp, setOtp] = useState<string>("");
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const [emailSentViaProvider, setEmailSentViaProvider] = useState<
-    boolean | null
-  >(null);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [fullname, setFullname] = useState<string>("");
   const [nickname, setNickname] = useState<string>("");
@@ -46,52 +36,38 @@ export default function SignUpPage() {
     let score = 0;
     if (password.length >= 8) score += 1;
     if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
-    return score; // 0=weak, 1=medium, 2=strong
+    return score;
   }, [password]);
+
   const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(
     null
   );
   const [nicknameChecking, setNicknameChecking] = useState<boolean>(false);
   const router = useRouter();
-  const imgSrc =
-    step === "password"
-      ? "/onboarding/password.png"
-      : step === "done"
-      ? "/onboarding/see-you-later.png"
-      : step === "email"
-      ? "/onboarding/welcome.png"
-      : "/onboarding/sign-in.png";
-  const layoutByStep: Record<
-    "email" | "phone" | "profile" | "password" | "done",
-    string
-  > = {
-    email:
-      "absolute z-100 -bottom-42 left-10 h-[500px] w-[500px] sm:h-[320px] sm:w-[320px]",
-    phone:
-      "absolute z-100 -bottom-42 left-10 h-[500px] w-[500px] sm:h-[320px] sm:w-[320px]",
-    profile:
-      "absolute z-100 -bottom-42 left-10 h-[500px] w-[500px] sm:h-[320px] sm:w-[320px]",
-    password:
-      "absolute z-100 -bottom-42 left-10 h-[500px] w-[500px] sm:h-[320px] sm:w-[320px]",
-    done: "absolute z-100 -bottom-42 left-10 h-[500px] w-[500px] sm:h-[320px] sm:w-[320px]",
-  };
+
+  const imgSrc = useMemo(() => {
+    switch (step) {
+      case "password":
+        return "/onboarding/password.png";
+      case "done":
+        return "/onboarding/see-you-later.png";
+      case "verify":
+        return "/onboarding/sign-in.png";
+      default:
+        return "/onboarding/welcome.png";
+    }
+  }, [step]);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        // Fetch countries with specific fields to avoid 400/timeout on large payload
         const res = await fetch(
           "https://restcountries.com/v3.1/all?fields=name,cca2,cca3,idd,currencies"
         );
         if (!res.ok) throw new Error("Failed to fetch countries");
-
         const data = await res.json();
-        if (!Array.isArray(data))
-          throw new Error("Invalid country data format");
 
-        // Fetch user's IP info to guess location
-        // Using ipapi.co (free tier has limits) - fallback to ip-api.com if needed
         let userCountryCode = null;
         try {
           const ipRes = await fetch("https://ipapi.co/json/");
@@ -99,9 +75,7 @@ export default function SignUpPage() {
             const ipData = await ipRes.json();
             userCountryCode = ipData?.country_code;
           }
-        } catch (e) {
-          console.warn("IP geolocation failed:", e);
-        }
+        } catch {}
 
         const countryEntries = data
           .map((c: any) => {
@@ -114,19 +88,15 @@ export default function SignUpPage() {
               : root
               ? [root]
               : [];
-            const currency = Array.isArray(Object.keys(c.currencies ?? {}))
-              ? Object.keys(c.currencies ?? {})[0]
-              : undefined;
             return {
               name: c.name?.common ?? c.cca3,
               cca2: c.cca2,
-              cca3: c.cca3,
               dial: dials[0] ?? "",
               dials,
-              currency,
             };
           })
-          .filter((c: any) => c.cca2 && c.cca3);
+          .filter((c: any) => c.cca2);
+
         const sorted = countryEntries.sort((a: any, b: any) =>
           a.name.localeCompare(b.name)
         );
@@ -135,15 +105,11 @@ export default function SignUpPage() {
           setCountries(sorted);
           if (userCountryCode) {
             const found = sorted.find((c: any) => c.cca2 === userCountryCode);
-            if (found && found.dial) {
-              setSelectedDial(found.dial);
-            }
+            if (found && found.dial) setSelectedDial(found.dial);
           }
         }
       } catch (e) {
-        console.error("Failed to load countries", e);
-      } finally {
-        if (!cancelled) setIsLoading(false);
+        console.error(e);
       }
     }
     load();
@@ -152,167 +118,193 @@ export default function SignUpPage() {
     };
   }, []);
 
-  const flagEmoji = useMemo(() => {
-    if (!selectedCca2) return "🏳️";
-    const codePoints = selectedCca2
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  }, [selectedCca2]);
+  const handleRegister = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email,
+          fullname,
+          phoneNumber, // Corrected field name to match backend expectation often 'phoneNumber' or 'phone' depending on schema
+          nickname,
+          password,
+          countryCode: selectedCca2,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStep("done");
+        setTimeout(() => router.push("/signin"), 3000);
+      } else {
+        alert(data.error || "Registration failed");
+      }
+    } catch {
+      alert("Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <main className="relative min-h-dvh w-full overflow-hidden bg-background text-foreground">
-      <div
-        className={`${cherryBombOne.className} absolute left-4 top-4 text-xl`}
-      >
-        Wishy
-      </div>
-      {(step === "email" || step === "done") && (
-        <div
-          className={`pointer-events-none ${
-            layoutByStep[step as "email" | "done"]
-          }`}
-        >
+    <div className="flex min-h-dvh w-full bg-white text-black overflow-hidden md:flex-row flex-col">
+      {/* Left Panel - Illustration */}
+      <div className="hidden md:flex w-1/2 bg-[#8B5CF6] flex-col items-center justify-center relative p-12 text-white overflow-hidden">
+        <div className="absolute top-8 left-8">
+          <h1 className={`${cherryBombOne.className} text-3xl`}>Wishy</h1>
+        </div>
+        <div className="relative w-full max-w-lg aspect-square mb-8">
           <Image
             src={imgSrc}
-            alt=""
+            alt="Onboarding"
             fill
             className="object-contain"
-            sizes="(max-width: 640px) 320px, 500px"
             priority
           />
         </div>
-      )}
-      {isLoading && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="rounded-xl bg-white/90 px-5 py-3 text-sm text-foreground">
-            Setting up your account...
-          </div>
+        <div className="text-center z-10 max-w-md">
+          <h2 className={`${cherryBombOne.className} text-4xl mb-4`}>
+            {step === "email" && "Join the fun!"}
+            {step === "verify" && "Almost there!"}
+            {step === "password" && "Secure your account"}
+            {step === "done" && "Welcome aboard!"}
+          </h2>
+          <p className="text-lg text-white/90">
+            {step === "email" &&
+              "Create an account to start wishing and sharing moments with friends."}
+            {step === "verify" &&
+              "We just need a few more details to get you set up properly."}
+            {step === "password" &&
+              "Choose a strong password to keep your wishes safe."}
+            {step === "done" &&
+              "Your account has been created successfully. Redirecting you..."}
+          </p>
         </div>
-      )}
-      <div className="mx-auto pb-12 flex min-h-dvh max-w-md flex-col items-center justify-center px-4 sm:max-w-lg">
-        <h1
-          className={`${cherryBombOne.className} mb-2 text-center text-6xl text-white sm:text-6xl`}
-        >
-          {step === "email" ? "What's your" : "Create"}
-        </h1>
-        <h1
-          className={`${cherryBombOne.className} mb-6 text-center text-6xl text-white sm:text-6xl`}
-        >
-          {step === "email" ? "email?" : "account"}
-        </h1>
-        <p className="mb-6 text-center text-sm text-white/90">
-          {step === "email"
-            ? "Onboarding • Step 1 of 3"
-            : step === "verify"
-            ? "Onboarding • Step 2 of 3"
-            : step === "password"
-            ? "Onboarding • Step 3 of 3"
-            : "Onboarding complete"}
-        </p>
-        <div className="w-full rounded-2xl bg-white/95 p-5 text-foreground shadow-xl backdrop-blur">
+        {/* Decorative circles */}
+        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="w-full md:w-1/2 flex flex-col items-center justify-center px-6 py-12 relative bg-white min-h-dvh">
+        <div className="md:hidden absolute top-6 left-6">
+          <h1 className={`${cherryBombOne.className} text-2xl text-[#8B5CF6]`}>
+            Wishy
+          </h1>
+        </div>
+
+        {isLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+            <Loader />
+          </div>
+        )}
+
+        <div className="w-full max-w-md space-y-8 z-10">
+          <div className="text-center md:text-left">
+            <h2
+              className={`${cherryBombOne.className} text-4xl mb-2 text-black`}
+            >
+              {step === "email"
+                ? "Create Account"
+                : step === "verify"
+                ? "Verify & Profile"
+                : step === "password"
+                ? "Set Password"
+                : "All Set!"}
+            </h2>
+            <p className="text-zinc-500">
+              {step === "email"
+                ? "Enter your email to get started"
+                : step === "verify"
+                ? `We sent a code to ${email}`
+                : step === "password"
+                ? "Choose a unique nickname and password"
+                : "Redirecting to login..."}
+            </p>
+          </div>
+
           {step === "email" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="text-sm text-black font-medium"
-                >
-                  Email
+                <label className="block text-sm font-medium text-gray-700">
+                  Email Address
                 </label>
                 <input
-                  id="email"
                   type="email"
-                  inputMode="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black placeholder:text-black/60 outline-none ring-0 focus:border-zinc-400"
+                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-black placeholder:text-zinc-400 outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20 transition-all"
                 />
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={
-                    !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || isSendingOtp
-                  }
-                  onClick={async () => {
-                    console.log("[Signup] Sending OTP to:", email);
-                    setIsSendingOtp(true);
-                    try {
-                      const res = await fetch(`${API_URL}/api/otp/send`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        credentials: "include",
-                        body: JSON.stringify({ email }),
-                      });
-                      const data = await res.json().catch(() => ({}));
-                      console.log("[Signup] Send OTP response data:", data);
-                      setIsSendingOtp(false);
-                      if (res.ok) {
-                        setEmailSentViaProvider(Boolean(data?.email_sent));
-                        setOtpSent(true);
-                        setStep("verify");
-                      } else {
-                        console.error("[Signup] Send OTP failed:", data);
-                      }
-                    } catch (error) {
-                      console.error("[Signup] Error calling send-otp:", error);
-                      setIsSendingOtp(false);
+              <button
+                disabled={
+                  !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || isSendingOtp
+                }
+                onClick={async () => {
+                  setIsSendingOtp(true);
+                  try {
+                    const res = await fetch(`${API_URL}/api/otp/send`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({ email }),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                      setOtpSent(true);
+                      setStep("verify");
+                    } else {
+                      alert("Failed to send OTP.");
                     }
-                  }}
-                  className={`inline-flex flex-1 items-center justify-center rounded-xl px-4 py-3 text-sm font-medium ${
-                    !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || isSendingOtp
-                      ? "bg-primary/60 text-white cursor-not-allowed"
-                      : "bg-primary text-white"
-                  }`}
+                  } catch {
+                    alert("Error sending OTP");
+                  } finally {
+                    setIsSendingOtp(false);
+                  }
+                }}
+                className="w-full rounded-2xl bg-[#8B5CF6] py-4 text-white font-semibold shadow-lg shadow-[#8B5CF6]/20 hover:bg-[#7c4dff] transition-all disabled:opacity-50"
+              >
+                {isSendingOtp ? "Sending..." : "Continue"}
+              </button>
+              <p className="text-center text-sm text-zinc-500">
+                Already have an account?{" "}
+                <Link
+                  href="/signin"
+                  className="font-semibold text-[#8B5CF6] hover:underline"
                 >
-                  Next
-                </button>
-              </div>
+                  Sign in
+                </Link>
+              </p>
             </div>
           )}
 
           {step === "verify" && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="otp"
-                    className="text-sm text-black font-medium"
-                  >
-                    Enter code
+                <div className="flex justify-between items-center">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Verification Code
                   </label>
                   <button
-                    type="button"
-                    disabled={isSendingOtp}
                     onClick={async () => {
                       setIsSendingOtp(true);
-                      const res = await fetch(`${API_URL}/api/otp/send`, {
+                      await fetch(`${API_URL}/api/otp/send`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
                         body: JSON.stringify({ email }),
                       });
                       setIsSendingOtp(false);
-                      if (res.ok) {
-                        const data = await res.json().catch(() => ({}));
-                        setEmailSentViaProvider(Boolean(data?.email_sent));
-                        setOtpSent(true);
-                      }
                     }}
-                    className={`text-sm text-black underline ${
-                      isSendingOtp
-                        ? "opacity-60 text-gray-700 cursor-not-allowed"
-                        : ""
-                    }`}
+                    className="text-xs font-medium text-[#8B5CF6] hover:underline"
                   >
-                    Resend code
+                    Resend Code
                   </button>
                 </div>
                 <input
-                  id="otp"
                   type="text"
                   inputMode="numeric"
                   placeholder="123456"
@@ -320,47 +312,40 @@ export default function SignUpPage() {
                   onChange={(e) =>
                     setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                   }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black placeholder:text-black/60 outline-none ring-0 focus:border-zinc-400"
+                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-black text-center text-lg tracking-widest outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
                 />
-                <div className="text-xs text-zinc-600">
-                  {otpSent ? `Code sent to ${email}` : ""}
-                </div>
               </div>
               <div className="space-y-2">
-                <label
-                  htmlFor="fullname"
-                  className="text-sm text-black font-medium"
-                >
-                  Full name
+                <label className="block text-sm font-medium text-gray-700">
+                  Full Name
                 </label>
                 <input
-                  id="fullname"
                   type="text"
-                  placeholder="Your full name"
+                  placeholder="John Doe"
                   value={fullname}
                   onChange={(e) => setFullname(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black placeholder:text-black/60 outline-none ring-0 focus:border-zinc-400"
+                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-black outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm text-black font-medium">
-                  Phone number
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone Number
                 </label>
                 <div className="flex gap-2">
                   <select
                     value={selectedDial}
                     onChange={(e) => setSelectedDial(e.target.value)}
-                    className="relative z-20 w-32 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black"
+                    className="w-28 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-4 text-black outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
                   >
                     <option value="" disabled>
-                      Select code
+                      Code
                     </option>
                     {countries.length > 0 &&
                     countries.some((c) => c.dials?.length)
                       ? countries.flatMap((c) =>
-                          (c.dials || []).map((d) => (
-                            <option key={`${c.cca3}-${d}`} value={d}>
-                              {d} {c.name}
+                          (c.dials || []).map((d: any) => (
+                            <option key={`${c.cca2}-${d}`} value={d}>
+                              {d} {c.cca2}
                             </option>
                           ))
                         )
@@ -372,19 +357,18 @@ export default function SignUpPage() {
                   </select>
                   <input
                     type="tel"
-                    inputMode="tel"
                     placeholder="000 000 0000"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black placeholder:text-black/60 outline-none ring-0 focus:border-zinc-400"
+                    className="flex-1 rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-black outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setStep("email")}
-                  className="inline-flex flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-black"
+                  className="flex-1 rounded-2xl border border-zinc-200 bg-white py-4 font-semibold text-black hover:bg-zinc-50"
                 >
                   Back
                 </button>
@@ -393,8 +377,8 @@ export default function SignUpPage() {
                   disabled={
                     otp.length !== 6 ||
                     !selectedDial ||
-                    phoneNumber.trim().length < 5 ||
-                    !fullname.trim()
+                    phoneNumber.length < 5 ||
+                    !fullname
                   }
                   onClick={async () => {
                     const res = await fetch(`${API_URL}/api/otp/verify`, {
@@ -404,15 +388,9 @@ export default function SignUpPage() {
                       body: JSON.stringify({ email, otp }),
                     });
                     if (res.ok) setStep("password");
+                    else alert("Invalid OTP");
                   }}
-                  className={`inline-flex flex-1 items-center justify-center rounded-xl px-4 py-3 text-sm font-medium ${
-                    otp.length !== 6 ||
-                    !selectedDial ||
-                    phoneNumber.trim().length < 5 ||
-                    !fullname.trim()
-                      ? "bg-primary/60 text-white cursor-not-allowed"
-                      : "bg-primary text-white"
-                  }`}
+                  className="flex-1 rounded-2xl bg-[#8B5CF6] py-4 text-white font-semibold shadow-lg shadow-[#8B5CF6]/20 hover:bg-[#7c4dff] disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -421,29 +399,21 @@ export default function SignUpPage() {
           )}
 
           {step === "password" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="space-y-2">
-                <label
-                  htmlFor="nickname"
-                  className="text-sm text-black font-medium"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   Nickname
                 </label>
                 <input
-                  id="nickname"
                   type="text"
-                  placeholder="Unique nickname"
+                  placeholder="unique_user"
                   value={nickname}
                   onChange={(e) => {
                     setNickname(e.target.value.replace(/\s/g, ""));
                     setNicknameAvailable(null);
                   }}
                   onBlur={async () => {
-                    const valid = /^[A-Za-z0-9_]+$/.test(nickname);
-                    if (!valid || !nickname.trim()) {
-                      setNicknameAvailable(false);
-                      return;
-                    }
+                    if (!nickname) return;
                     setNicknameChecking(true);
                     try {
                       const res = await fetch(
@@ -456,175 +426,86 @@ export default function SignUpPage() {
                         }
                       );
                       const data = await res.json();
-                      setNicknameAvailable(Boolean(data?.available));
+                      setNicknameAvailable(data.available);
                     } catch {
                       setNicknameAvailable(null);
                     } finally {
                       setNicknameChecking(false);
                     }
                   }}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black placeholder:text-black/60 outline-none ring-0 focus:border-zinc-400"
+                  className={`w-full rounded-2xl border bg-zinc-50 px-5 py-4 text-black outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 ${
+                    nicknameAvailable === true
+                      ? "border-green-500"
+                      : nicknameAvailable === false
+                      ? "border-red-500"
+                      : "border-zinc-200"
+                  }`}
                 />
-                <div className="text-xs text-black">
-                  {nicknameChecking
-                    ? "Checking availability..."
-                    : nicknameAvailable === false
-                    ? "Nickname not available or invalid"
-                    : nicknameAvailable === true
-                    ? "Nickname available"
-                    : ""}
+                <div className="text-xs h-4">
+                  {nicknameChecking ? (
+                    <span className="text-zinc-500">Checking...</span>
+                  ) : nicknameAvailable === false ? (
+                    <span className="text-red-500">Unavailable</span>
+                  ) : nicknameAvailable === true ? (
+                    <span className="text-green-500">Available</span>
+                  ) : null}
                 </div>
               </div>
               <div className="space-y-2">
-                <label
-                  htmlFor="password"
-                  className="text-sm text-black font-medium"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
                 <div className="relative">
                   <input
-                    id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black placeholder:text-black/60 outline-none ring-0 focus:border-zinc-400 pr-10"
+                    className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 pr-12 text-black outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-black"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-black"
                   >
-                    {showPassword ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-                        <line x1="2" x2="22" y1="2" y2="22" />
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
+                    {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
-
-                {/* Password Strength Indicator */}
-                <div className="flex gap-1 pt-1">
-                  <div
-                    className={`h-1 flex-1 rounded-full transition-colors ${
-                      password.length > 0
-                        ? passwordStrength >= 1
-                          ? "bg-yellow-400"
-                          : "bg-red-400"
-                        : "bg-zinc-200"
-                    }`}
-                  ></div>
-                  <div
-                    className={`h-1 flex-1 rounded-full transition-colors ${
-                      passwordStrength >= 2 ? "bg-green-500" : "bg-zinc-200"
-                    }`}
-                  ></div>
-                </div>
-                <div className="text-[10px] text-zinc-500 flex justify-between">
-                  <span>Min 8 chars</span>
-                  <span>1 special char</span>
+                <div className="flex gap-1 mt-2">
+                  {[1, 2].map((level) => (
+                    <div
+                      key={level}
+                      className={`h-1 flex-1 rounded-full transition-all ${
+                        passwordStrength >= level
+                          ? "bg-green-500"
+                          : "bg-zinc-200"
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStep("verify")}
-                  className="inline-flex flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-black"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  disabled={
-                    passwordStrength < 2 ||
-                    !nickname.trim() ||
-                    !/^[A-Za-z0-9_]+$/.test(nickname) ||
-                    nicknameAvailable === false
-                  }
-                  onClick={async () => {
-                    const res = await fetch(`${API_URL}/api/auth/signup`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      credentials: "include",
-                      body: JSON.stringify({
-                        email,
-                        password,
-                        fullname,
-                        nickname,
-                        phoneNumber,
-                        countryCode: selectedCca2,
-                      }),
-                    });
-                    if (res.ok) {
-                      setStep("done");
-                      setIsLoading(true);
-                      setTimeout(() => router.push("/home"), 1200);
-                    }
-                  }}
-                  className={`inline-flex flex-1 items-center justify-center rounded-xl px-4 py-3 text-sm font-medium ${
-                    passwordStrength < 2 ||
-                    !nickname.trim() ||
-                    !/^[A-Za-z0-9_]+$/.test(nickname) ||
-                    nicknameAvailable === false
-                      ? "bg-primary/60 text-white cursor-not-allowed"
-                      : "bg-primary text-white"
-                  }`}
-                >
-                  Create account
-                </button>
-              </div>
+              <button
+                onClick={handleRegister}
+                disabled={!password || !nickname || nicknameAvailable === false}
+                className="w-full rounded-2xl bg-[#8B5CF6] py-4 text-white font-semibold shadow-lg shadow-[#8B5CF6]/20 hover:bg-[#7c4dff] disabled:opacity-50"
+              >
+                Create Account
+              </button>
             </div>
           )}
 
           {step === "done" && (
-            <div className="space-y-4 text-center">
-              <h2 className="text-lg font-semibold">All set</h2>
-              <p className="text-sm text-zinc-600">You will be redirected.</p>
-              <Link
-                href="/home"
-                className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white"
-              >
-                Continue
-              </Link>
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-500">
+                ✓
+              </div>
+              <p className="text-zinc-600">
+                You're all set! Redirecting you to sign in...
+              </p>
             </div>
           )}
-          <p className="mt-4 text-center text-sm text-black">
-            Already have an account?{" "}
-            <Link href="/signin" className="font-medium underline">
-              Sign in
-            </Link>
-          </p>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

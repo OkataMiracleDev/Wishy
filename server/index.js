@@ -17,7 +17,11 @@ app.use(cookieParser());
 // CORS configuration
 // Allow requests from the frontend (e.g., localhost:3000)
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: [
+    "http://localhost:3000",
+    "https://wishy-app.vercel.app",
+    "https://wishy-backend-ibt4.onrender.com"
+  ],
   credentials: true // Important for cookies
 }));
 

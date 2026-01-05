@@ -122,6 +122,21 @@ router.post("/check-nickname", async (req, res) => {
   }
 });
 
+// Check Email Existence
+router.post("/check-email", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ ok: false, error: "missing_email" });
+    }
+    const user = await User.findOne({ email });
+    return res.json({ ok: true, exists: !!user });
+  } catch (error) {
+    console.error("Check email error:", error);
+    return res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
 // Me (Get Current User)
 router.get("/me", (req, res) => {
   const token = req.cookies.wishy_session;

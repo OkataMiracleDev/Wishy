@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { cherryBombOne } from "@/lib/fonts";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -9,61 +10,116 @@ export default function WishlistPage() {
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("NGN");
   const [plan, setPlan] = useState<"daily" | "weekly" | "monthly" | null>(null);
-  const [goal, setGoal] = useState<number>(0);
-  const [importance, setImportance] = useState<"low" | "medium" | "high">("medium");
+  const [goal, setGoal] = useState<number | string>("");
+  const [importance, setImportance] = useState<"low" | "medium" | "high">(
+    "medium"
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit = name.trim() && plan && goal > 0;
+  const canSubmit =
+    name.trim() && plan && parseFloat(String(goal)) > 0 && !isSubmitting;
 
   return (
-    <main className="min-h-dvh w-full bg-background text-foreground">
-      <div className="mx-auto max-w-md px-4 py-8 sm:max-w-lg">
-        <h1 className="mb-4 text-2xl font-semibold text-white">Create wishlist</h1>
+    <main className="min-h-dvh w-full bg-[#0a0a0a] text-white pb-32">
+      {/* Background Gradients */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-purple-900/10 to-transparent" />
+        <div className="absolute top-40 right-0 w-72 h-72 bg-purple-600/5 rounded-full blur-[80px]" />
+      </div>
+
+      <div className="relative mx-auto max-w-md px-6 py-8 sm:max-w-lg z-10">
+        <h1
+          className={`${cherryBombOne.className} mb-8 text-3xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400`}
+        >
+          Create Wishlist
+        </h1>
+
         <form
           onSubmit={async (e) => {
             e.preventDefault();
             if (!canSubmit) return;
-            const res = await fetch(`${API_URL}/api/wishlist/create`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ name, currency, plan, goal, importance }),
-            });
-            if (res.ok) {
-              window.location.href = "/home";
+            setIsSubmitting(true);
+            try {
+              const res = await fetch(`${API_URL}/api/wishlist/create`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                  name,
+                  currency,
+                  plan,
+                  goal: parseFloat(String(goal)),
+                  importance,
+                }),
+              });
+              if (res.ok) {
+                window.location.href = "/home";
+              }
+            } catch (e) {
+              console.error(e);
+            } finally {
+              setIsSubmitting(false);
             }
           }}
-          className="space-y-4 rounded-2xl bg-white p-5 shadow-xl"
+          className="space-y-6 rounded-[2rem] bg-[#161618] p-8 border border-white/5 shadow-xl"
         >
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium text-black">
-              Wishlist name
+            <label
+              htmlFor="name"
+              className="text-xs font-medium text-zinc-400 ml-1"
+            >
+              What are you wishing for?
             </label>
             <input
               id="name"
               type="text"
-              placeholder="e.g. Skateboard Rides Vista"
+              placeholder="e.g. New Macbook Pro"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black outline-none"
+              className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
             />
           </div>
+
           <div className="space-y-2">
-            <label className="text-sm font-medium text-black">Currency</label>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black outline-none"
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+            <label className="text-xs font-medium text-zinc-400 ml-1">
+              Currency
+            </label>
+            <div className="relative">
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full appearance-none rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none transition-colors"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c} value={c} className="bg-[#161618]">
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+            </div>
           </div>
+
           <div className="space-y-2">
-            <label htmlFor="goal" className="text-sm font-medium text-black">
-              Goal amount
+            <label
+              htmlFor="goal"
+              className="text-xs font-medium text-zinc-400 ml-1"
+            >
+              Goal Amount
             </label>
             <input
               id="goal"
@@ -71,20 +127,25 @@ export default function WishlistPage() {
               inputMode="numeric"
               placeholder="0.00"
               value={goal}
-              onChange={(e) => setGoal(parseFloat(e.target.value) || 0)}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black outline-none"
+              onChange={(e) => setGoal(e.target.value)}
+              className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
             />
           </div>
+
           <div className="space-y-2">
-            <span className="text-sm font-medium text-black">Importance</span>
+            <span className="text-xs font-medium text-zinc-400 ml-1">
+              Importance Level
+            </span>
             <div className="flex gap-2">
               {(["low", "medium", "high"] as const).map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
                   onClick={() => setImportance(lvl)}
-                  className={`flex-1 rounded-xl border px-4 py-3 text-sm ${
-                    importance === lvl ? "border-primary" : "border-zinc-200"
+                  className={`flex-1 rounded-xl border px-2 py-3 text-xs font-medium uppercase tracking-wider transition-all ${
+                    importance === lvl
+                      ? "border-purple-500 bg-purple-500/20 text-purple-400"
+                      : "border-white/10 bg-black/20 text-zinc-500 hover:bg-white/5"
                   }`}
                 >
                   {lvl}
@@ -92,16 +153,21 @@ export default function WishlistPage() {
               ))}
             </div>
           </div>
+
           <div className="space-y-2">
-            <span className="text-sm font-medium text-black">Savings plan</span>
+            <span className="text-xs font-medium text-zinc-400 ml-1">
+              Savings Plan
+            </span>
             <div className="flex gap-2">
               {(["daily", "weekly", "monthly"] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setPlan(p)}
-                  className={`flex-1 rounded-xl border px-4 py-3 text-sm ${
-                    plan === p ? "border-primary" : "border-zinc-200"
+                  className={`flex-1 rounded-xl border px-2 py-3 text-xs font-medium uppercase tracking-wider transition-all ${
+                    plan === p
+                      ? "border-purple-500 bg-purple-500/20 text-purple-400"
+                      : "border-white/10 bg-black/20 text-zinc-500 hover:bg-white/5"
                   }`}
                 >
                   {p}
@@ -109,14 +175,13 @@ export default function WishlistPage() {
               ))}
             </div>
           </div>
+
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-medium ${
-              !canSubmit ? "bg-primary/60 text-white" : "bg-primary text-white"
-            }`}
+            className="w-full rounded-xl bg-white py-4 text-sm font-bold text-black hover:bg-zinc-200 transition-colors disabled:opacity-50 mt-4 shadow-lg shadow-white/5"
           >
-            Done
+            {isSubmitting ? "Creating..." : "Create Wishlist"}
           </button>
         </form>
       </div>
