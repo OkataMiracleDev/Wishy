@@ -60,10 +60,11 @@ router.post("/share", async (req, res) => {
     user.shareToken = crypto.randomBytes(10).toString("hex");
     await user.save();
   }
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.CLIENT_URL || "http://localhost:3000";
-  const shareUrl = `${appUrl}/u/${user.shareToken}`;
+  const headerOrigin = req.get("origin");
+  const envAppUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.CLIENT_URL;
+  const appUrl = envAppUrl || headerOrigin || "http://localhost:3000";
+  const shareUrl = `${appUrl.replace(/\/+$/, "")}/u/${user.shareToken}`;
   return res.json({ ok: true, shareUrl, token: user.shareToken });
 });
 
 module.exports = router;
-

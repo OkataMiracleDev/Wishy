@@ -67,9 +67,24 @@ export default function ProfilePage() {
       const data = await res.json().catch(() => ({}));
       if (data?.shareUrl) {
         setShareUrl(data.shareUrl);
-        await navigator.clipboard.writeText(data.shareUrl);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(data.shareUrl);
+          } else {
+            const el = document.createElement("textarea");
+            el.value = data.shareUrl;
+            el.style.position = "fixed";
+            el.style.opacity = "0";
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            document.body.removeChild(el);
+          }
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+        } catch {
+          setCopySuccess(false);
+        }
       }
     } catch (e) {
       console.error("Failed to share", e);
