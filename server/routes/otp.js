@@ -83,12 +83,13 @@ router.post("/send", async (req, res) => {
   }
 
   // Set cookies
-  const isProduction = process.env.NODE_ENV === 'production';
+  // Force secure/none for cross-site usage (Render backend + Vercel frontend)
+  // This works on localhost too in most modern browsers
   const cookieOptions = {
     httpOnly: true,
     maxAge: 10 * 60 * 1000, // 10 mins
-    sameSite: isProduction ? "none" : "lax",
-    secure: isProduction,
+    sameSite: "none",
+    secure: true,
     path: "/"
   };
 

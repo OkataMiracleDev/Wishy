@@ -5,6 +5,9 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
 const app = express();
+// Enable trust proxy for cookies behind load balancers (Render/Heroku/etc)
+app.set("trust proxy", 1);
+
 const PORT = process.env.PORT || 5000;
 
 // Connect to Database

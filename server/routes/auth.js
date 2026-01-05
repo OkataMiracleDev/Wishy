@@ -40,12 +40,12 @@ router.post("/signup", async (req, res) => {
     });
 
     const token = Buffer.from(`${newUser.email}`).toString("base64");
-    const isProd = process.env.NODE_ENV === "production";
+    // Force secure/none for cross-site usage
     res.cookie("wishy_session", token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: isProd ? "none" : "lax",
-      secure: isProd,
+      sameSite: "none",
+      secure: true,
     });
 
     return res.json({ ok: true, email: newUser.email });
@@ -77,12 +77,12 @@ router.post("/signin", async (req, res) => {
     }
 
     const token = Buffer.from(`${user.email}`).toString("base64");
-    const isProd = process.env.NODE_ENV === "production";
+    // Force secure/none for cross-site usage
     res.cookie("wishy_session", token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: isProd ? "none" : "lax",
-      secure: isProd,
+      sameSite: "none",
+      secure: true,
     });
 
     return res.json({ ok: true, email: user.email });
