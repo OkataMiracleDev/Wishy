@@ -270,7 +270,7 @@ export default function WishlistItemsPage() {
                     if (Math.abs(dx) > 80 || v > 0.5) {
                       const idList = [...deckOrder];
                       idList.splice(idx, 1);
-                      idList.push(it._id);
+                      idList.unshift(it._id);
                       setDeckOrder(idList);
                     }
                     setDragX(0);

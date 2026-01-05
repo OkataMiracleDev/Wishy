@@ -263,7 +263,7 @@ export default function AuthedHomePage() {
                               if (Math.abs(dx) > 80 || v > 0.5) {
                                 const idList = [...(deckOrders[w._id] || [])];
                                 idList.splice(idx, 1);
-                                idList.push(it._id);
+                                idList.unshift(it._id);
                                 setDeckOrders((prev) => ({ ...prev, [w._id]: idList }));
                               }
                               setDragXMap((prev) => ({ ...prev, [w._id]: 0 }));
