@@ -1,0 +1,27 @@
+Adobe After Effects v23.6 Windows 64 render log for project “wiley-wishy.aep”
+
+Rendering started on 05/01/2026 at 02:23:56
+
+  05/01/2026 02:23:56: Starting composition “ChatGPT Image Jan 5, 2026, 01_52_53 AM”.
+
+  Output To: C:\Users\mrmir\Documents\Projects\next Projects\wishy\wishy\public\onboarding\wiley-sign-in_[#####].png    05/01/2026 02:23:58: Finished composition “ChatGPT Image Jan 5, 2026, 01_52_53 AM”.
+
+
+  05/01/2026 02:23:58: Starting composition “ChatGPT Image Jan 5, 2026, 01_52_56 AM”.
+
+  Output To: C:\Users\mrmir\Documents\Projects\next Projects\wishy\wishy\public\onboarding\wiley-welcome_[#####].png    05/01/2026 02:23:59: Finished composition “ChatGPT Image Jan 5, 2026, 01_52_56 AM”.
+
+
+  05/01/2026 02:23:59: Starting composition “ChatGPT Image Jan 5, 2026, 01_52_59 AM”.
+
+  Output To: C:\Users\mrmir\Documents\Projects\next Projects\wishy\wishy\public\onboarding\wiley-see-you-later_[#####].png    05/01/2026 02:24:00: Finished composition “ChatGPT Image Jan 5, 2026, 01_52_59 AM”.
+
+
+  05/01/2026 02:24:00: Starting composition “ChatGPT Image Jan 5, 2026, 01_53_03 AM”.
+
+  Output To: C:\Users\mrmir\Documents\Projects\next Projects\wishy\wishy\public\onboarding\wiley-password_[#####].png    05/01/2026 02:24:01: Finished composition “ChatGPT Image Jan 5, 2026, 01_53_03 AM”.
+
+
+  Total Time Elapsed: 5 Seconds
+Log closed on 05/01/2026 at 02:24:01
+
