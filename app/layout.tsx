@@ -16,6 +16,28 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${manrope.variable} ${cherryBombOne.variable} antialiased`}>
         {children}
+        <div className="fixed bottom-4 left-0 right-0 z-50 flex items-center justify-center">
+          <nav className="flex w-full max-w-sm items-center justify-around rounded-full bg-black/40 px-6 py-3 text-xs text-white">
+            <a href="/home" className="flex flex-col items-center gap-1">
+              <span className="h-7 w-7 rounded-full bg-white text-black flex items-center justify-center text-[11px]">
+                H
+              </span>
+              <span>Home</span>
+            </a>
+            <a href="/budget" className="flex flex-col items-center gap-1">
+              <span className="h-7 w-7 rounded-full border border-white flex items-center justify-center text-[11px]">
+                ₦
+              </span>
+              <span>Budget</span>
+            </a>
+            <a href="/profile" className="flex flex-col items-center gap-1">
+              <span className="h-7 w-7 rounded-full border border-white flex items-center justify-center text-[11px]">
+                ☺
+              </span>
+              <span>Profile</span>
+            </a>
+          </nav>
+        </div>
       </body>
     </html>
   );

@@ -24,6 +24,9 @@ app.use(cors({
 // Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/otp", require("./routes/otp"));
+app.use("/api/wishlist", require("./routes/wishlist"));
+app.use("/api/profile", require("./routes/profile"));
+app.use("/api/public", require("./routes/public"));
 
 app.get("/", (req, res) => {
   res.send("Wishy API is running");
