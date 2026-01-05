@@ -3,6 +3,10 @@ const router = express.Router();
 const fetch = require("node-fetch");
 const nodemailer = require("nodemailer");
 
+// In-memory store for OTP codes (keyed by email)
+// This avoids relying on cross-site cookies, which many browsers block by default.
+const otpStore = new Map();
+
 // Send OTP
 router.post("/send", async (req, res) => {
   console.log("[OTP] Received request to send OTP");
@@ -54,6 +58,9 @@ router.post("/send", async (req, res) => {
       </div>
     </div>
   </div>`;
+
+  // Save OTP in memory with 10-minute expiry
+  otpStore.set(email, { code, expiresAt: Date.now() + 10 * 60 * 1000 });
 
   let emailSent = false;
   
@@ -114,6 +121,22 @@ router.post("/verify", (req, res) => {
 
   if (!email || !otp || otp.length !== 6) {
     return res.status(400).json({ ok: false, error: "invalid_input" });
+  }
+
+  // Prefer in-memory store over cookies (more reliable across domains)
+  const entry = otpStore.get(email);
+  if (entry) {
+    const { code, expiresAt } = entry;
+    if (Date.now() > expiresAt) {
+      otpStore.delete(email);
+      return res.status(400).json({ ok: false, error: "expired_code" });
+    }
+    if (code === otp) {
+      otpStore.delete(email);
+      res.clearCookie("wishy_otp_email");
+      res.clearCookie("wishy_otp_code");
+      return res.json({ ok: true });
+    }
   }
 
   if (emailCookie !== email || codeCookie !== otp) {

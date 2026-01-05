@@ -20,12 +20,12 @@ app.use(cookieParser());
 // CORS configuration
 // Allow requests from the frontend (e.g., localhost:3000)
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://wishy-app.vercel.app",
-    "https://wishy-backend-ibt4.onrender.com"
-  ],
-  credentials: true // Important for cookies
+  origin: (origin, callback) => {
+    // Reflect the request origin to ensure cookies set with credentials work
+    // This accommodates preview/staging domains on Vercel/Render.
+    callback(null, true);
+  },
+  credentials: true
 }));
 
 // Routes
