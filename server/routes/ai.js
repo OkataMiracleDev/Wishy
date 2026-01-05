@@ -11,11 +11,20 @@ router.post("/ask", async (req, res) => {
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) {
       return res.json({ 
-        answer: "I'm ready to help! Please set the XAI_API_KEY in your server .env file to enable Grok AI." 
+        answer: "I'm ready to help! Please set the XAI_API_KEY in your server .env file to enable AI." 
       });
     }
 
-    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+    let apiUrl = "https://api.x.ai/v1/chat/completions";
+    let model = "grok-beta";
+
+    // Auto-detect Groq key
+    if (apiKey.startsWith("gsk_")) {
+      apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+      model = "mixtral-8x7b-32768";
+    }
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -26,7 +35,7 @@ router.post("/ask", async (req, res) => {
           { role: "system", content: "You are Wiley Wishy, a fun and helpful budgeting assistant." },
           { role: "user", content: question }
         ],
-        model: "grok-beta",
+        model: model,
         stream: false,
         temperature: 0.7
       })
