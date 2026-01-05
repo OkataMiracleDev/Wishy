@@ -13,13 +13,11 @@ export default function WishlistPage() {
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("NGN");
   const [plan, setPlan] = useState<"daily" | "weekly" | "monthly" | null>(null);
-  const [goal, setGoal] = useState<number | string>("");
   const [importance, setImportance] = useState<"low" | "medium" | "high">("medium");
   const [image, setImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit =
-    name.trim() && plan && parseFloat(String(goal)) > 0 && !isSubmitting;
+  const canSubmit = name.trim() && plan && !isSubmitting;
 
   return (
     <main className="min-h-dvh w-full bg-[#0a0a0a] text-white pb-32">
@@ -46,7 +44,6 @@ export default function WishlistPage() {
               formData.append("name", name);
               formData.append("currency", currency);
               formData.append("plan", plan!);
-              formData.append("goal", String(goal));
               formData.append("importance", importance);
               if (image) {
                 formData.append("image", image);
@@ -140,23 +137,7 @@ export default function WishlistPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="goal"
-              className="text-xs font-medium text-zinc-400 ml-1"
-            >
-              Goal Amount
-            </label>
-            <input
-              id="goal"
-              type="number"
-              inputMode="numeric"
-              placeholder="0.00"
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
-            />
-          </div>
+          
 
           <div className="space-y-2">
             <span className="text-xs font-medium text-zinc-400 ml-1">

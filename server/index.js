@@ -5,7 +5,6 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
 const app = express();
-// Enable trust proxy for cookies behind load balancers (Render/Heroku/etc)
 app.set("trust proxy", 1);
 
 const PORT = process.env.PORT || 5000;
@@ -17,12 +16,8 @@ connectDB();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS configuration
-// Allow requests from the frontend (e.g., localhost:3000)
 app.use(cors({
   origin: (origin, callback) => {
-    // Reflect the request origin to ensure cookies set with credentials work
-    // This accommodates preview/staging domains on Vercel/Render.
     callback(null, true);
   },
   credentials: true

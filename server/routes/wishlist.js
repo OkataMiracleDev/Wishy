@@ -48,7 +48,7 @@ router.post("/create", upload.single('image'), async (req, res) => {
   // Handle FormData or JSON
   const { name, currency, plan, goal, importance } = req.body;
   
-  if (!name || !currency || !goal) {
+  if (!name || !currency) {
     return res.status(400).json({ ok: false, error: "missing_fields" });
   }
 
@@ -77,7 +77,7 @@ router.post("/create", upload.single('image'), async (req, res) => {
     name: String(name).trim(),
     currency,
     plan: finalPlan,
-    goal: Number(goal),
+    goal: Number(goal ?? 0),
     importance: importance || "medium",
     imageUrl: imageUrl,
     currentSaved: 0,

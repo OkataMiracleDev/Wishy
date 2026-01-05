@@ -3,11 +3,8 @@ const router = express.Router();
 const fetch = require("node-fetch");
 const nodemailer = require("nodemailer");
 
-// In-memory store for OTP codes (keyed by email)
-// This avoids relying on cross-site cookies, which many browsers block by default.
 const otpStore = new Map();
 
-// Send OTP
 router.post("/send", async (req, res) => {
   console.log("[OTP] Received request to send OTP");
   const { email } = req.body;
@@ -59,7 +56,6 @@ router.post("/send", async (req, res) => {
     </div>
   </div>`;
 
-  // Save OTP in memory with 10-minute expiry
   otpStore.set(email, { code, expiresAt: Date.now() + 10 * 60 * 1000 });
 
   let emailSent = false;
@@ -89,9 +85,6 @@ router.post("/send", async (req, res) => {
     }
   }
 
-  // Set cookies
-  // Force secure/none for cross-site usage (Render backend + Vercel frontend)
-  // This works on localhost too in most modern browsers
   const cookieOptions = {
     httpOnly: true,
     maxAge: 10 * 60 * 1000, // 10 mins
@@ -106,7 +99,6 @@ router.post("/send", async (req, res) => {
   return res.json({ ok: true, email_sent: emailSent, testing: !smtpUser });
 });
 
-// Verify OTP
 router.post("/verify", (req, res) => {
   const { email, otp } = req.body;
   const emailCookie = req.cookies.wishy_otp_email;
@@ -123,7 +115,6 @@ router.post("/verify", (req, res) => {
     return res.status(400).json({ ok: false, error: "invalid_input" });
   }
 
-  // Prefer in-memory store over cookies (more reliable across domains)
   const entry = otpStore.get(email);
   if (entry) {
     const { code, expiresAt } = entry;
@@ -143,7 +134,6 @@ router.post("/verify", (req, res) => {
     return res.status(400).json({ ok: false, error: "invalid_code" });
   }
 
-  // Clear cookies
   res.clearCookie("wishy_otp_email");
   res.clearCookie("wishy_otp_code");
 

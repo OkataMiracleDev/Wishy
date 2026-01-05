@@ -138,7 +138,7 @@ export default function SignUpPage() {
       const data = await res.json();
       if (res.ok) {
         setStep("done");
-        setTimeout(() => router.push("/signin"), 3000);
+        setTimeout(() => router.push("/home"), 1500);
       } else {
         toast.error(data.error || "Registration failed");
       }

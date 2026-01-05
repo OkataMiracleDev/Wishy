@@ -5,7 +5,7 @@ const WishlistSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     currency: { type: String, required: true, trim: true }, // e.g. NGN, USD
     plan: { type: String, enum: ["daily", "weekly", "monthly"], required: true },
-    goal: { type: Number, required: true, min: 0 },
+    goal: { type: Number, default: 0, min: 0 },
     currentSaved: { type: Number, default: 0, min: 0 },
     importance: { type: String, enum: ["low", "medium", "high"], default: "medium" },
     imageUrl: { type: String, trim: true },

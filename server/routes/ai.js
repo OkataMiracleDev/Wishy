@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const fetch = require("node-fetch"); // Or use native fetch in Node 18+
+const fetch = require("node-fetch");
 
 // POST /api/ai/ask
 router.post("/ask", async (req, res) => {
@@ -32,7 +32,7 @@ router.post("/ask", async (req, res) => {
       },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: "You are Wiley Wishy, a fun and helpful budgeting assistant." },
+          { role: "system", content: "You are Wiley Wishy, an expert assistant on savings, budgeting, personal finance, and investing. Give clear, practical, step-by-step guidance tailored to the user's scenario. Keep answers concise, friendly, and actionable. Use NGN examples when the user is in Nigeria; otherwise default to USD. When asked for plans, provide a simple budget split (e.g., 50/30/20) and a weekly saving schedule. Avoid disclaimers; be decisive but prudent." },
           { role: "user", content: question }
         ],
         model: model,
@@ -42,7 +42,10 @@ router.post("/ask", async (req, res) => {
     });
 
     const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content || "Sorry, I couldn't think of an answer.";
+    let answer = data.choices?.[0]?.message?.content;
+    if (!answer || typeof answer !== "string" || !answer.trim()) {
+      answer = "Here’s a practical plan:\n- Use a simple 50/30/20 budget: 50% needs, 30% wants, 20% savings/debt.\n- Set a weekly auto-transfer to savings. Example: ₦5,000/week if aiming for ₦260,000/year.\n- Build a 3–6 month emergency fund first.\n- Invest gradually in broad, low-cost index funds (or money market funds if you need short-term safety).\n- Track all spending; adjust targets monthly based on actuals.";
+    }
     
     return res.json({ answer });
   } catch (error) {
