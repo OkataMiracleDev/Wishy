@@ -26,10 +26,16 @@ export default function BudgetPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API_URL}/api/wishlist/list`, { credentials: "include" });
+        let res = await fetch(`/api/wishlist/list`, { credentials: "include" }).catch(() => null as any);
+        if (!res || !res.ok) {
+          res = await fetch(`${API_URL}/api/wishlist/list`, { credentials: "include" });
+        }
         const data = await res.json().catch(() => ({}));
         if (data?.wishlists) setWishlists(data.wishlists);
-        const pr = await fetch(`${API_URL}/api/profile/payments`, { credentials: "include" });
+        let pr = await fetch(`/api/profile/payments`, { credentials: "include" }).catch(() => null as any);
+        if (!pr || !pr.ok) {
+          pr = await fetch(`${API_URL}/api/profile/payments`, { credentials: "include" });
+        }
         const pdata = await pr.json().catch(() => ({}));
         if (pdata?.payments) setPayments(pdata.payments);
       } catch (e) {
@@ -196,12 +202,20 @@ export default function BudgetPage() {
               onClick={async () => {
                 setIsSubmitting(true);
                 try {
-                    const res = await fetch(`${API_URL}/api/wishlist/payment`, {
+                    let res = await fetch(`/api/wishlist/payment`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
                     body: JSON.stringify({ wishlistId: selected, amount: parseFloat(String(amount)) }),
-                    });
+                    }).catch(() => null as any);
+                    if (!res || !res.ok) {
+                      res = await fetch(`${API_URL}/api/wishlist/payment`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({ wishlistId: selected, amount: parseFloat(String(amount)) }),
+                      });
+                    }
                     if (res.ok) {
                     const data = await res.json().catch(() => ({}));
                     setWishlists((prev) =>
@@ -247,10 +261,16 @@ export default function BudgetPage() {
                 onClick={async () => {
                   setIsSubmitting(true);
                   try {
-                    const res = await fetch(`${API_URL}/api/wishlist/${selected}`, {
+                    let res = await fetch(`/api/wishlist/${selected}`, {
                       method: "DELETE",
                       credentials: "include",
-                    });
+                    }).catch(() => null as any);
+                    if (!res || !res.ok) {
+                      res = await fetch(`${API_URL}/api/wishlist/${selected}`, {
+                        method: "DELETE",
+                        credentials: "include",
+                      });
+                    }
                     if (res.ok) {
                       setWishlists((prev) => prev.filter((w) => w._id !== selected));
                       setSelected("");

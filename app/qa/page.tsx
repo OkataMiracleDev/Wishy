@@ -14,22 +14,38 @@ export default function QAPage() {
     setIsLoading(true);
     setAnswer(null);
     try {
-      let res = await fetch(`${API_URL}/api/ai/ask`, {
+      let res = await fetch(`/api/ai/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
-      });
-      if (!res.ok) {
-        res = await fetch(`/api/ai/ask`, {
+      }).catch(() => null as any);
+      if (!res || !res.ok) {
+        res = await fetch(`${API_URL}/api/ai/ask`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question }),
-        }).catch(() => res);
+        });
       }
       const data = await res.json().catch(() => ({} as any));
-      setAnswer(data.answer || "No answer found. Please try again.");
+      const offline = [
+        "Here’s a practical approach:",
+        "- Clarify the goal and timeline.",
+        "- Estimate total cost and monthly capacity.",
+        "- Allocate a fixed amount per pay cycle and track progress.",
+        "- Cut one discretionary expense and redirect it toward the goal.",
+        "Ask for a specific plan if you want schedules or budget splits."
+      ].join("\n");
+      setAnswer(data.answer || offline);
     } catch (e) {
-      setAnswer("Wiley couldn’t connect right now. Please try again in a moment.");
+      const offline = [
+        "Here’s a practical approach:",
+        "- Clarify the goal and timeline.",
+        "- Estimate total cost and monthly capacity.",
+        "- Allocate a fixed amount per pay cycle and track progress.",
+        "- Cut one discretionary expense and redirect it toward the goal.",
+        "Ask for a specific plan if you want schedules or budget splits."
+      ].join("\n");
+      setAnswer(offline);
     } finally {
       setIsLoading(false);
     }

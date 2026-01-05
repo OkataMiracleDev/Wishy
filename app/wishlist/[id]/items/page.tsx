@@ -59,6 +59,10 @@ export default function WishlistItemsPage() {
   useEffect(() => {
     setDeckOrder(stack.map((it) => it._id));
   }, [stack]);
+  const dragStart = useRef<{x:number;y:number}>({x:0,y:0});
+  const [dragX, setDragX] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [dragId, setDragId] = useState<string>("");
 
   const nextCard = () => {
     setDeckOrder((prev) => {
@@ -67,6 +71,9 @@ export default function WishlistItemsPage() {
       if (first) list.push(first);
       return list;
     });
+    setDragX(0);
+    setDragY(0);
+    setDragId("");
   };
   const prevCard = () => {
     setDeckOrder((prev) => {
@@ -75,6 +82,9 @@ export default function WishlistItemsPage() {
       if (last) list.unshift(last);
       return list;
     });
+    setDragX(0);
+    setDragY(0);
+    setDragId("");
   };
 
   const handleAddItem = async () => {
@@ -230,45 +240,38 @@ export default function WishlistItemsPage() {
           {deckOrder.map((idRef, idx) => {
             const it = items.find((x) => x._id === idRef) || stack[idx];
             const offset = deckOrder.length - idx - 1;
-            const rotate = idx === deckOrder.length - 1 ? 0 : -3 + Math.random() * 6;
+            const rotate = idx === deckOrder.length - 1 ? 0 : (((Array.from(idRef).reduce((s,c)=>s+c.charCodeAt(0),0) % 5) - 2));
+            const isTop = idx === deckOrder.length - 1;
             return (
               <div
                 key={it._id}
                 className="absolute inset-0 rounded-[2rem] border border-white/10 bg-[#161618] shadow-xl touch-pan-y"
                 style={{
-                  transform: `translateY(${offset * 12}px) rotate(${rotate}deg)`,
+                  transform: isTop ? `translate(${dragX}px, ${dragY}px) rotate(${rotate}deg)` : `translateY(${offset * 12}px) rotate(${rotate}deg)`,
                   zIndex: 10 + idx,
                 }}
                 onPointerDown={(e) => {
-                  const target = e.currentTarget;
-                  const startX = e.clientX;
-                  const startY = e.clientY;
-                  let moved = false;
-                  function move(ev: PointerEvent) {
-                    moved = true;
-                    const dx = ev.clientX - startX;
-                    const dy = ev.clientY - startY;
-                    target.style.transform = `translate(${dx}px, ${dy}px) rotate(${rotate}deg)`;
-                    target.style.transition = "none";
+                  if (!isTop) return;
+                  dragStart.current = { x: e.clientX, y: e.clientY };
+                  setDragId(it._id);
+                }}
+                onPointerMove={(e) => {
+                  if (!isTop || dragId !== it._id) return;
+                  setDragX(e.clientX - dragStart.current.x);
+                  setDragY(e.clientY - dragStart.current.y);
+                }}
+                onPointerUp={(e) => {
+                  if (!isTop || dragId !== it._id) return;
+                  const dx = e.clientX - dragStart.current.x;
+                  if (dx > 80) {
+                    const idList = [...deckOrder];
+                    idList.splice(idx, 1);
+                    idList.push(it._id);
+                    setDeckOrder(idList);
                   }
-                  function up(ev: PointerEvent) {
-                    document.removeEventListener("pointermove", move);
-                    document.removeEventListener("pointerup", up);
-                    if (moved) {
-                      const dx = ev.clientX - startX;
-                      if (dx > 80) {
-                        const idList = [...deckOrder];
-                        idList.splice(idx, 1);
-                        idList.push(it._id);
-                        setDeckOrder(idList);
-                        return;
-                      }
-                    }
-                    target.style.transform = `translateY(${offset * 12}px) rotate(${rotate}deg)`;
-                    target.style.transition = "transform 200ms ease";
-                  }
-                  document.addEventListener("pointermove", move);
-                  document.addEventListener("pointerup", up);
+                  setDragX(0);
+                  setDragY(0);
+                  setDragId("");
                 }}
               >
                 <div className="p-6 flex flex-col h-full">

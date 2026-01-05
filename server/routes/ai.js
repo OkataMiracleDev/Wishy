@@ -13,7 +13,7 @@ router.post("/ask", async (req, res) => {
     const openaiKey = process.env.OPENAI_API_KEY;
 
     const baseMessages = [
-      { role: "system", content: "You are Wiley Wishy, a friendly personal finance assistant. Answer the user's specific question directly with concise, actionable guidance. Avoid generic templates. Only propose budget splits (e.g., 50/30/20) or weekly schedules if the user explicitly asks for a plan. Prefer NGN examples when the context suggests Nigeria; otherwise use USD. Keep it practical and tailored." },
+      { role: "system", content: "You are Wiley Wishy, a friendly personal finance assistant. Answer the user's specific question directly with concise, actionable guidance. Do not provide generic budget templates or default splits like 50/30/20 unless the user explicitly asks for a plan. When the user does ask for a plan, ask one brief clarifying question (income, key expenses, or timeline) before proposing numbers. Prefer NGN examples when the context suggests Nigeria; otherwise use USD. Keep responses practical, tailored, and focused on the user's stated goal." },
       { role: "user", content: question }
     ];
 
@@ -72,7 +72,15 @@ router.post("/ask", async (req, res) => {
     }
     return res.json({ answer });
   } catch (error) {
-    return res.status(500).json({ error: "Failed to get answer" });
+    const offline = [
+      "Here’s a practical approach:",
+      "- Clarify the goal and timeline.",
+      "- Estimate total cost and monthly capacity.",
+      "- Allocate a fixed amount per pay cycle and track progress.",
+      "- Cut one discretionary expense and redirect it toward the goal.",
+      "Ask for a specific plan if you want schedules or budget splits."
+    ].join("\n");
+    return res.json({ answer: offline });
   }
 });
 

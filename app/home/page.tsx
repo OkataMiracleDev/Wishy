@@ -34,9 +34,10 @@ export default function AuthedHomePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API_URL}/api/wishlist/list`, {
-          credentials: "include",
-        });
+        let res = await fetch(`/api/wishlist/list`, { credentials: "include" }).catch(() => null as any);
+        if (!res || !res.ok) {
+          res = await fetch(`${API_URL}/api/wishlist/list`, { credentials: "include" });
+        }
         if (!res.ok) return;
         const data = await res.json();
         if (data?.wishlists) {
@@ -67,10 +68,10 @@ export default function AuthedHomePage() {
     if (!confirmDeleteId) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`${API_URL}/api/wishlist/${confirmDeleteId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      let res = await fetch(`/api/wishlist/${confirmDeleteId}`, { method: "DELETE", credentials: "include" }).catch(() => null as any);
+      if (!res || !res.ok) {
+        res = await fetch(`${API_URL}/api/wishlist/${confirmDeleteId}`, { method: "DELETE", credentials: "include" });
+      }
       if (res.ok) {
         setWishlists((prev) => prev.filter((w) => w._id !== confirmDeleteId));
       }
@@ -228,45 +229,15 @@ export default function AuthedHomePage() {
                     {(deckOrders[w._id] || []).map((idRef, idx) => {
                       const it = (w.items || []).find((x) => x._id === idRef) || (w.items || [])[idx];
                       const offset = (deckOrders[w._id] || []).length - idx - 1;
-                      const rotate = idx === (deckOrders[w._id] || []).length - 1 ? 0 : -3 + Math.random() * 6;
+                      const rotate = idx === (deckOrders[w._id] || []).length - 1 ? 0 : (((Array.from(idRef).reduce((s,c)=>s+c.charCodeAt(0),0) % 5) - 2));
+                      const isTop = idx === (deckOrders[w._id] || []).length - 1;
                       return (
                         <div
                           key={it?._id || `${w._id}-${idx}`}
                           className="absolute inset-0 rounded-2xl border border-white/10 bg-[#101011] shadow-xl"
                           style={{
-                            transform: `translateY(${offset * 10}px) rotate(${rotate}deg)`,
+                            transform: isTop ? `translate(0px, 0px) rotate(${rotate}deg)` : `translateY(${offset * 10}px) rotate(${rotate}deg)`,
                             zIndex: 5 + idx,
-                          }}
-                          onPointerDown={(e) => {
-                            const target = e.currentTarget as HTMLDivElement;
-                            const startX = e.clientX;
-                            const startY = e.clientY;
-                            let moved = false;
-                            function move(ev: PointerEvent) {
-                              moved = true;
-                              const dx = ev.clientX - startX;
-                              const dy = ev.clientY - startY;
-                              target.style.transform = `translate(${dx}px, ${dy}px) rotate(${rotate}deg)`;
-                              target.style.transition = "none";
-                            }
-                            function up(ev: PointerEvent) {
-                              document.removeEventListener("pointermove", move);
-                              document.removeEventListener("pointerup", up);
-                              if (moved) {
-                                const dx = ev.clientX - startX;
-                                if (dx > 80) {
-                                  const order = [...(deckOrders[w._id] || [])];
-                                  order.splice(idx, 1);
-                                  order.push(idRef);
-                                  setDeckOrders((prev) => ({ ...prev, [w._id]: order }));
-                                  return;
-                                }
-                              }
-                              target.style.transform = `translateY(${offset * 10}px) rotate(${rotate}deg)`;
-                              target.style.transition = "transform 200ms ease";
-                            }
-                            document.addEventListener("pointermove", move);
-                            document.addEventListener("pointerup", up);
                           }}
                         >
                           {it ? (
