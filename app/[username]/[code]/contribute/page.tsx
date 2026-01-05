@@ -138,7 +138,7 @@ export default function ContributePage() {
             onClick={async () => {
               setIsSubmitting(true);
               try {
-                const res = await fetch(`${API_URL}/api/public/contribute`, {
+                let res = await fetch(`/api/public/contribute`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -150,7 +150,22 @@ export default function ContributePage() {
                     email,
                     imageData,
                   }),
-                });
+                }).catch(() => null as any);
+                if (!res || !res.ok) {
+                  res = await fetch(`${API_URL}/api/public/contribute`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      token,
+                      wishlistId,
+                      itemId,
+                      amount: Number(amount),
+                      name,
+                      email,
+                      imageData,
+                    }),
+                  });
+                }
                 const data = await res.json().catch(() => ({}));
                 if (data?.ok) {
                   router.push(`/${params.username}/${token}/thanks`);
