@@ -59,7 +59,7 @@ export default function WishlistItemsPage() {
   useEffect(() => {
     setDeckOrder(stack.map((it) => it._id));
   }, [stack]);
-  const dragStart = useRef<{x:number;y:number}>({x:0,y:0});
+  const dragStart = useRef<{x:number;y:number;t:number}>({x:0,y:0,t:0});
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [dragId, setDragId] = useState<string>("");
@@ -245,33 +245,41 @@ export default function WishlistItemsPage() {
             return (
               <div
                 key={it._id}
-                className="absolute inset-0 rounded-[2rem] border border-white/10 bg-[#161618] shadow-xl touch-pan-y"
+                className="absolute inset-0 rounded-[2rem] border border-white/10 bg-[#161618] shadow-xl touch-none"
                 style={{
                   transform: isTop ? `translate(${dragX}px, ${dragY}px) rotate(${rotate}deg)` : `translateY(${offset * 12}px) rotate(${rotate}deg)`,
                   zIndex: 10 + idx,
                 }}
                 onPointerDown={(e) => {
                   if (!isTop) return;
-                  dragStart.current = { x: e.clientX, y: e.clientY };
+                  dragStart.current = { x: e.clientX, y: e.clientY, t: Date.now() };
                   setDragId(it._id);
-                }}
-                onPointerMove={(e) => {
-                  if (!isTop || dragId !== it._id) return;
-                  setDragX(e.clientX - dragStart.current.x);
-                  setDragY(e.clientY - dragStart.current.y);
-                }}
-                onPointerUp={(e) => {
-                  if (!isTop || dragId !== it._id) return;
-                  const dx = e.clientX - dragStart.current.x;
-                  if (dx > 80) {
-                    const idList = [...deckOrder];
-                    idList.splice(idx, 1);
-                    idList.push(it._id);
-                    setDeckOrder(idList);
-                  }
-                  setDragX(0);
-                  setDragY(0);
-                  setDragId("");
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const startT = Date.now();
+                  const move = (ev: PointerEvent) => {
+                    setDragX(ev.clientX - startX);
+                    setDragY(ev.clientY - startY);
+                  };
+                  const up = (ev: PointerEvent) => {
+                    document.removeEventListener("pointermove", move);
+                    document.removeEventListener("pointerup", up);
+                    const dx = ev.clientX - startX;
+                    const dt = Date.now() - startT;
+                    const v = Math.abs(dx) / Math.max(dt, 1);
+                    if (Math.abs(dx) > 80 || v > 0.5) {
+                      const idList = [...deckOrder];
+                      idList.splice(idx, 1);
+                      idList.push(it._id);
+                      setDeckOrder(idList);
+                    }
+                    setDragX(0);
+                    setDragY(0);
+                    setDragId("");
+                  };
+                  (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+                  document.addEventListener("pointermove", move);
+                  document.addEventListener("pointerup", up);
                 }}
               >
                 <div className="p-6 flex flex-col h-full">

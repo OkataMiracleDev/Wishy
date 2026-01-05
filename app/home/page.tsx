@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cherryBombOne } from "@/lib/fonts";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -30,6 +30,10 @@ export default function AuthedHomePage() {
   const [deckOrders, setDeckOrders] = useState<Record<string, string[]>>({});
   const [confirmDeleteId, setConfirmDeleteId] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const dragStartMap = useRef<Record<string, {x:number;y:number;t:number}>>({});
+  const [dragXMap, setDragXMap] = useState<Record<string, number>>({});
+  const [dragYMap, setDragYMap] = useState<Record<string, number>>({});
+  const [dragIdMap, setDragIdMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function load() {
@@ -234,10 +238,41 @@ export default function AuthedHomePage() {
                       return (
                         <div
                           key={it?._id || `${w._id}-${idx}`}
-                          className="absolute inset-0 rounded-2xl border border-white/10 bg-[#101011] shadow-xl"
+                          className="absolute inset-0 rounded-2xl border border-white/10 bg-[#101011] shadow-xl touch-none"
                           style={{
-                            transform: isTop ? `translate(0px, 0px) rotate(${rotate}deg)` : `translateY(${offset * 10}px) rotate(${rotate}deg)`,
+                            transform: isTop ? `translate(${dragXMap[w._id] || 0}px, ${dragYMap[w._id] || 0}px) rotate(${rotate}deg)` : `translateY(${offset * 10}px) rotate(${rotate}deg)`,
                             zIndex: 5 + idx,
+                          }}
+                          onPointerDown={(e) => {
+                            if (!isTop || !it?._id) return;
+                            dragStartMap.current[w._id] = { x: e.clientX, y: e.clientY, t: Date.now() };
+                            setDragIdMap((prev) => ({ ...prev, [w._id]: it._id }));
+                            const startX = e.clientX;
+                            const startY = e.clientY;
+                            const startT = Date.now();
+                            const move = (ev: PointerEvent) => {
+                              setDragXMap((prev) => ({ ...prev, [w._id]: ev.clientX - startX }));
+                              setDragYMap((prev) => ({ ...prev, [w._id]: ev.clientY - startY }));
+                            };
+                            const up = (ev: PointerEvent) => {
+                              document.removeEventListener("pointermove", move);
+                              document.removeEventListener("pointerup", up);
+                              const dx = ev.clientX - startX;
+                              const dt = Date.now() - startT;
+                              const v = Math.abs(dx) / Math.max(dt, 1);
+                              if (Math.abs(dx) > 80 || v > 0.5) {
+                                const idList = [...(deckOrders[w._id] || [])];
+                                idList.splice(idx, 1);
+                                idList.push(it._id);
+                                setDeckOrders((prev) => ({ ...prev, [w._id]: idList }));
+                              }
+                              setDragXMap((prev) => ({ ...prev, [w._id]: 0 }));
+                              setDragYMap((prev) => ({ ...prev, [w._id]: 0 }));
+                              setDragIdMap((prev) => ({ ...prev, [w._id]: "" }));
+                            };
+                            (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+                            document.addEventListener("pointermove", move);
+                            document.addEventListener("pointerup", up);
                           }}
                         >
                           {it ? (
