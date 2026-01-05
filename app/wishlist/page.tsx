@@ -1,19 +1,20 @@
 "use client";
 import { useState } from "react";
 import { cherryBombOne } from "@/lib/fonts";
+import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const CURRENCIES = ["NGN", "USD", "EUR", "GBP"];
 
 export default function WishlistPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("NGN");
   const [plan, setPlan] = useState<"daily" | "weekly" | "monthly" | null>(null);
   const [goal, setGoal] = useState<number | string>("");
-  const [importance, setImportance] = useState<"low" | "medium" | "high">(
-    "medium"
-  );
+  const [importance, setImportance] = useState<"low" | "medium" | "high">("medium");
+  const [image, setImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit =
@@ -40,23 +41,30 @@ export default function WishlistPage() {
             if (!canSubmit) return;
             setIsSubmitting(true);
             try {
+              const formData = new FormData();
+              formData.append("name", name);
+              formData.append("currency", currency);
+              formData.append("plan", plan!);
+              formData.append("goal", String(goal));
+              formData.append("importance", importance);
+              if (image) {
+                formData.append("image", image);
+              }
+
               const res = await fetch(`${API_URL}/api/wishlist/create`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({
-                  name,
-                  currency,
-                  plan,
-                  goal: parseFloat(String(goal)),
-                  importance,
-                }),
+                body: formData,
               });
               if (res.ok) {
-                window.location.href = "/home";
+                router.push("/home");
+              } else {
+                console.error("Failed to create wishlist");
+                alert("Something went wrong. Please try again.");
               }
             } catch (e) {
               console.error(e);
+              alert("Error creating wishlist.");
             } finally {
               setIsSubmitting(false);
             }
@@ -68,7 +76,7 @@ export default function WishlistPage() {
               htmlFor="name"
               className="text-xs font-medium text-zinc-400 ml-1"
             >
-              What are you wishing for?
+              Wishlist Name
             </label>
             <input
               id="name"
@@ -77,6 +85,22 @@ export default function WishlistPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-zinc-400 ml-1">
+              Image (Optional)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  setImage(e.target.files[0]);
+                }
+              }}
+              className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-500/10 file:text-purple-400 hover:file:bg-purple-500/20"
             />
           </div>
 

@@ -19,13 +19,23 @@ export default function ProfilePage() {
     async function load() {
       try {
         const res = await fetch(`${API_URL}/api/profile/me`, { credentials: "include" });
-        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+           if (res.status === 401) {
+             router.push("/signin");
+             return;
+           }
+           throw new Error("Failed to fetch profile");
+        }
+        const data = await res.json();
         if (data?.user) {
           setUser(data.user);
           setAccountNumber(data.user.accountNumber || "");
           setAccountName(data.user.accountName || "");
           setBankName(data.user.bankName || "");
           setThankYouMessage(data.user.thankYouMessage || "");
+        } else {
+           // No user data found, maybe redirect?
+           router.push("/signin");
         }
       } catch (e) {
         console.error("Failed to load profile", e);
@@ -242,6 +252,19 @@ export default function ProfilePage() {
               {shareUrl}
             </p>
           )}
+        </div>
+
+        {/* Sign Out Button */}
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={async () => {
+              await fetch(`${API_URL}/api/auth/signout`, { method: "POST", credentials: "include" });
+              router.push("/signin");
+            }}
+            className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
     </main>

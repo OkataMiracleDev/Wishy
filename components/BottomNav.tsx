@@ -28,6 +28,12 @@ export default function BottomNav() {
           </span>
           <span>Budget</span>
         </Link>
+        <Link href="/qa" className="flex flex-col items-center gap-1 group">
+          <span className={`h-7 w-7 rounded-full flex items-center justify-center text-[11px] transition-colors ${pathname === '/qa' ? 'bg-white text-black' : 'border border-white text-white group-hover:bg-white/20'}`}>
+            ?
+          </span>
+          <span>Q/A</span>
+        </Link>
         <Link href="/profile" className="flex flex-col items-center gap-1 group">
           <span className={`h-7 w-7 rounded-full flex items-center justify-center text-[11px] transition-colors ${pathname === '/profile' ? 'bg-white text-black' : 'border border-white text-white group-hover:bg-white/20'}`}>
             ☺

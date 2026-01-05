@@ -2,6 +2,25 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 
+// Optional Cloudinary Setup
+let cloudinary;
+let upload;
+try {
+  cloudinary = require('cloudinary').v2;
+  const multer = require('multer');
+  const storage = multer.memoryStorage();
+  upload = multer({ storage });
+  
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+} catch (e) {
+  console.warn("Cloudinary or Multer not installed. Image upload disabled.");
+  upload = { single: () => (req, res, next) => next() }; // Mock middleware
+}
+
 function getEmailFromSession(req) {
   const token = req.cookies.wishy_session;
   if (!token) return null;
@@ -22,15 +41,37 @@ router.get("/list", async (req, res) => {
   return res.json({ ok: true, wishlists: active });
 });
 
-router.post("/create", async (req, res) => {
+router.post("/create", upload.single('image'), async (req, res) => {
   const email = getEmailFromSession(req);
   if (!email) return res.status(401).json({ ok: false });
-  const { name, currency, plan, goal, importance, imageUrl } = req.body;
+  
+  // Handle FormData or JSON
+  const { name, currency, plan, goal, importance } = req.body;
+  
   if (!name || !currency || !goal) {
     return res.status(400).json({ ok: false, error: "missing_fields" });
   }
+
+  let imageUrl = req.body.imageUrl || "";
+
+  // Handle Cloudinary Upload if file exists
+  if (req.file && cloudinary) {
+    try {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "wishy/wishlists",
+      });
+      imageUrl = result.secure_url;
+    } catch (err) {
+      console.error("Cloudinary upload failed:", err);
+      // Continue without image or return error? Let's continue.
+    }
+  }
+
   const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ ok: false });
+  
   const finalPlan = plan || user.defaultPlan || "daily";
   const wishlist = {
     name: String(name).trim(),
@@ -38,10 +79,11 @@ router.post("/create", async (req, res) => {
     plan: finalPlan,
     goal: Number(goal),
     importance: importance || "medium",
-    imageUrl: imageUrl || "",
+    imageUrl: imageUrl,
     currentSaved: 0,
     isCompleted: false,
   };
+  
   user.wishlists.push(wishlist);
   if (!user.defaultPlan) {
     user.defaultPlan = finalPlan;
