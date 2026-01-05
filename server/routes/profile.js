@@ -67,4 +67,12 @@ router.post("/share", async (req, res) => {
   return res.json({ ok: true, shareUrl, token: user.shareToken });
 });
 
+router.get("/payments", async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const user = await User.findOne({ email }).lean();
+  if (!user) return res.status(404).json({ ok: false });
+  return res.json({ ok: true, payments: user.payments || [] });
+});
+
 module.exports = router;

@@ -82,6 +82,7 @@ router.post("/create", upload.single('image'), async (req, res) => {
     imageUrl: imageUrl,
     currentSaved: 0,
     isCompleted: false,
+    items: [],
   };
   
   user.wishlists.push(wishlist);
@@ -90,6 +91,50 @@ router.post("/create", upload.single('image'), async (req, res) => {
   }
   await user.save();
   return res.json({ ok: true, wishlist: user.wishlists[user.wishlists.length - 1] });
+});
+
+router.post("/item/add", upload.single('image'), async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const { wishlistId, name, price, importance } = req.body;
+  if (!wishlistId || !name || !price) {
+    return res.status(400).json({ ok: false, error: "invalid_input" });
+  }
+  let imageUrl = req.body.imageUrl || "";
+  if (req.file && cloudinary) {
+    try {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "wishy/items",
+      });
+      imageUrl = result.secure_url;
+    } catch (err) {}
+  }
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ ok: false });
+  const w = user.wishlists.id(wishlistId);
+  if (!w || w.deletedAt) return res.status(404).json({ ok: false });
+  w.items.push({
+    name: String(name).trim(),
+    price: Number(price),
+    importance: importance || "medium",
+    imageUrl,
+  });
+  w.goal = (w.items || []).reduce((sum, it) => sum + Number(it.price || 0), 0);
+  await user.save();
+  return res.json({ ok: true, wishlist: w });
+});
+
+router.get("/items/:wishlistId", async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const { wishlistId } = req.params;
+  const user = await User.findOne({ email }).lean();
+  if (!user) return res.status(404).json({ ok: false });
+  const w = user.wishlists.find((x) => String(x._id) === String(wishlistId));
+  if (!w || w.deletedAt) return res.status(404).json({ ok: false });
+  return res.json({ ok: true, items: w.items || [], wishlist: { _id: w._id, name: w.name, currency: w.currency, goal: w.goal, currentSaved: w.currentSaved } });
 });
 
 router.post("/payment", async (req, res) => {
@@ -108,6 +153,11 @@ router.post("/payment", async (req, res) => {
     w.isCompleted = true;
     w.completedAt = new Date();
   }
+  user.payments.push({
+    wishlistId: w._id,
+    amount: Number(amount),
+    source: "self",
+  });
   await user.save();
   return res.json({ ok: true, wishlist: w });
 });

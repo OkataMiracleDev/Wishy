@@ -24,17 +24,35 @@ router.get("/profile/:token", async (req, res) => {
   });
 });
 
-router.post("/donate", async (req, res) => {
-  const { token, imageData } = req.body;
-  if (!token || !imageData) {
+router.post("/contribute", async (req, res) => {
+  const { token, wishlistId, itemId, amount, name, email, imageData } = req.body;
+  if (!token || !wishlistId || !amount || !name || !email || !imageData) {
     return res.status(400).json({ ok: false, error: "invalid_input" });
   }
   const user = await User.findOne({ shareToken: token });
   if (!user) return res.status(404).json({ ok: false });
+  const w = user.wishlists.id(wishlistId);
+  if (!w || w.deletedAt) return res.status(404).json({ ok: false });
   user.donations.push({ imageData });
+  user.payments.push({
+    wishlistId: w._id,
+    itemId: itemId || undefined,
+    amount: Number(amount),
+    name: String(name),
+    email: String(email),
+    imageUrl: String(imageData),
+    source: "external",
+  });
+  w.currentSaved = Number(w.currentSaved || 0) + Number(amount);
   await user.save();
   return res.json({ ok: true, message: user.thankYouMessage || "Thank you!" });
 });
 
-module.exports = router;
+router.get("/payments/:token", async (req, res) => {
+  const { token } = req.params;
+  const user = await User.findOne({ shareToken: token }).lean();
+  if (!user) return res.status(404).json({ ok: false });
+  return res.json({ ok: true, payments: user.payments || [] });
+});
 
+module.exports = router;

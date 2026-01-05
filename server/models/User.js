@@ -1,5 +1,15 @@
 const mongoose = require("mongoose");
 
+const WishlistItemSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    price: { type: Number, required: true, min: 0 },
+    imageUrl: { type: String, trim: true },
+    importance: { type: String, enum: ["low", "medium", "high"], default: "medium" },
+  },
+  { _id: true, timestamps: true }
+);
+
 const WishlistSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -12,6 +22,7 @@ const WishlistSchema = new mongoose.Schema(
     isCompleted: { type: Boolean, default: false },
     completedAt: { type: Date },
     deletedAt: { type: Date },
+    items: { type: [WishlistItemSchema], default: [] },
   },
   { _id: true, timestamps: true }
 );
@@ -59,6 +70,21 @@ const UserSchema = new mongoose.Schema(
       type: [
         {
           imageData: String,
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
+    payments: {
+      type: [
+        {
+          wishlistId: { type: mongoose.Schema.Types.ObjectId },
+          itemId: { type: mongoose.Schema.Types.ObjectId },
+          amount: { type: Number, required: true, min: 0 },
+          name: { type: String, trim: true },
+          email: { type: String, trim: true },
+          imageUrl: { type: String, trim: true },
+          source: { type: String, enum: ["self", "external"], default: "self" },
           createdAt: { type: Date, default: Date.now },
         },
       ],

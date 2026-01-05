@@ -11,6 +11,7 @@ type Wishlist = {
   goal: number;
   currentSaved: number;
   plan: "daily" | "weekly" | "monthly";
+  items?: { _id: string; name: string; price: number; importance: "low" | "medium" | "high" }[];
 };
 
 export default function BudgetPage() {
@@ -19,6 +20,7 @@ export default function BudgetPage() {
   const [selected, setSelected] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [payments, setPayments] = useState<any[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -26,6 +28,9 @@ export default function BudgetPage() {
         const res = await fetch(`${API_URL}/api/wishlist/list`, { credentials: "include" });
         const data = await res.json().catch(() => ({}));
         if (data?.wishlists) setWishlists(data.wishlists);
+        const pr = await fetch(`${API_URL}/api/profile/payments`, { credentials: "include" });
+        const pdata = await pr.json().catch(() => ({}));
+        if (pdata?.payments) setPayments(pdata.payments);
       } catch (e) {
         console.error(e);
       } finally {
@@ -42,6 +47,12 @@ export default function BudgetPage() {
     const per = w.goal / periods;
     return { id: w._id, text: `${w.currency} ${per.toFixed(2)} / ${w.plan}`, name: w.name };
   });
+  const preferenceTable = wishlists
+    .flatMap((w) => (w.items || []).map((it) => ({ ...it, wishlistName: w.name, currency: w.currency })))
+    .sort((a, b) => {
+      const order = { high: 3, medium: 2, low: 1 } as any;
+      return order[b.importance] - order[a.importance] || b.price - a.price;
+    });
 
   if (isLoading) {
     return (
@@ -97,6 +108,40 @@ export default function BudgetPage() {
                 <div key={s.id} className="flex items-center justify-between p-4 rounded-2xl bg-[#161618] border border-white/5">
                   <span className="text-sm font-medium text-white">{s.name}</span>
                   <span className="text-sm font-bold text-purple-400">{s.text}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Table of Preference */}
+        <div className="mb-8">
+          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">Table of Preference</h2>
+          <div className="space-y-3">
+            {preferenceTable.length === 0 ? (
+              <p className="text-zinc-600 text-sm">No items added yet.</p>
+            ) : (
+              preferenceTable.map((it) => (
+                <div key={it._id} className="flex items-center justify-between p-4 rounded-2xl bg-[#161618] border border-white/5">
+                  <span className="text-sm font-medium text-white">{it.name} • {it.wishlistName}</span>
+                  <span className="text-sm font-bold text-purple-400">{it.currency} {Number(it.price).toLocaleString()} • {it.importance}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Payment History */}
+        <div className="mb-8">
+          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">Payment History</h2>
+          <div className="space-y-3">
+            {payments.length === 0 ? (
+              <p className="text-zinc-600 text-sm">No payments yet.</p>
+            ) : (
+              payments.slice().reverse().map((p, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-[#161618] border border-white/5">
+                  <span className="text-sm font-medium text-white">{p.source === "external" ? "External" : "Self"} • {p.name || "You"}</span>
+                  <span className="text-sm font-bold text-green-400">{Number(p.amount).toLocaleString()}</span>
                 </div>
               ))
             )}

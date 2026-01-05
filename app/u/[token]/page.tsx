@@ -39,70 +39,16 @@ export default function PublicProfilePage({ params }: { params: { token: string 
               ))}
             </div>
             <div className="mt-3 text-sm">Total budget: {profile.totalBudget.toLocaleString()}</div>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
+            <a
+              href={`/u/${token}/contribute`}
               className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white"
             >
-              Donate
-            </button>
+              Contribute
+            </a>
           </div>
         )}
 
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-sm rounded-2xl bg-white p-5">
-              <div className="text-sm">
-                {profile?.accountName} • {profile?.bankName} • {profile?.accountNumber}
-              </div>
-              <div className="mt-3 text-sm font-medium">Upload receipt image</div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  const reader = new FileReader();
-                  reader.onload = () => setImageData(String(reader.result || ""));
-                  reader.readAsDataURL(f);
-                }}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-black outline-none"
-              />
-              <div className="mt-4 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="inline-flex flex-1 items-center justify-center rounded-xl border border-zinc-300 px-4 py-3 text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={!imageData}
-                  onClick={async () => {
-                    const res = await fetch(`${API_URL}/api/public/donate`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ token, imageData }),
-                    });
-                    const data = await res.json().catch(() => ({}));
-                    if (data?.ok) {
-                      setSubmittedMessage(data.message || "");
-                    }
-                  }}
-                  className={`inline-flex flex-1 items-center justify-center rounded-xl px-4 py-3 text-sm font-medium ${
-                    !imageData ? "bg-primary/60 text-white" : "bg-primary text-white"
-                  }`}
-                >
-                  Done
-                </button>
-              </div>
-              {submittedMessage && (
-                <div className="mt-3 text-sm text-zinc-700">{submittedMessage}</div>
-              )}
-            </div>
-          </div>
-        )}
+        
       </div>
     </main>
   );
