@@ -56,37 +56,8 @@ router.post("/send", async (req, res) => {
   </div>`;
 
   let emailSent = false;
-  if (smtpUser && smtpPass) {
-    console.log("[OTP] Attempting to send email via SMTP...");
-    try {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: false,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
-
-      const info = await transporter.sendMail({
-        from: `"${senderName}" <${senderEmail}>`,
-        to: email,
-        subject: "Your Wishy verification code",
-        html: html,
-      });
-
-      console.log("[OTP] SMTP response:", info.messageId);
-      emailSent = true;
-    } catch (err) {
-      console.error("[OTP] Error sending email via SMTP:", err);
-      emailSent = false;
-    }
-  } else {
-    console.warn("[OTP] Missing SMTP credentials. Skipping email send.");
-  }
-
-  if (!emailSent && process.env.BREVO_API_KEY) {
+  
+  if (process.env.BREVO_API_KEY) {
     try {
       const apiRes = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
