@@ -55,6 +55,6 @@ export default function TwitterImage() {
         </div>
       </div>
     ),
-    { size }
+    { width: size.width, height: size.height }
   );
 }

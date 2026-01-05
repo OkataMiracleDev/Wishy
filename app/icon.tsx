@@ -27,6 +27,6 @@ export default function Icon() {
         🦄
       </div>
     ),
-    { size }
+    { width: size.width, height: size.height }
   );
 }

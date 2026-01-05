@@ -27,6 +27,6 @@ export default function AppleIcon() {
         🦄
       </div>
     ),
-    { size }
+    { width: size.width, height: size.height }
   );
 }

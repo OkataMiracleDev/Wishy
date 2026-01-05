@@ -70,6 +70,6 @@ export default function OpengraphImage() {
         </div>
       </div>
     ),
-    { size }
+    { width: size.width, height: size.height }
   );
 }
