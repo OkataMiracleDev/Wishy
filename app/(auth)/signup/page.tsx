@@ -253,7 +253,7 @@ export default function SignUpPage() {
                       body: JSON.stringify({ email }),
                     });
                     const data = await res.json().catch(() => ({}));
-                    if (res.ok) {
+                    if (res.ok || data.ok) {
                       setOtpSent(true);
                       setStep("verify");
                     } else {
@@ -291,13 +291,24 @@ export default function SignUpPage() {
                   <button
                     onClick={async () => {
                       setIsSendingOtp(true);
-                      await fetch(`${API_URL}/api/otp/send`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        credentials: "include",
-                        body: JSON.stringify({ email }),
-                      });
-                      setIsSendingOtp(false);
+                      try {
+                        const res = await fetch(`${API_URL}/api/otp/send`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          credentials: "include",
+                          body: JSON.stringify({ email }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (res.ok || data.ok) {
+                          setOtpSent(true);
+                        } else {
+                          alert("Failed to resend OTP.");
+                        }
+                      } catch {
+                        alert("Error resending OTP");
+                      } finally {
+                        setIsSendingOtp(false);
+                      }
                     }}
                     className="text-xs font-medium text-[#8B5CF6] hover:underline"
                   >
