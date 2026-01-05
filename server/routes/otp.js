@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const fetch = require("node-fetch");
 const nodemailer = require("nodemailer");
 
 // Send OTP
@@ -83,6 +84,31 @@ router.post("/send", async (req, res) => {
     }
   } else {
     console.warn("[OTP] Missing SMTP credentials. Skipping email send.");
+  }
+
+  if (!emailSent && process.env.BREVO_API_KEY) {
+    try {
+      const apiRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+        },
+        body: JSON.stringify({
+          sender: { email: senderEmail, name: senderName },
+          to: [{ email }],
+          subject: "Your Wishy verification code",
+          htmlContent: html,
+        }),
+      });
+      if (apiRes.ok) {
+        emailSent = true;
+      } else {
+        console.error("[OTP] Brevo API error status:", apiRes.status);
+      }
+    } catch (err) {
+      console.error("[OTP] Error sending via Brevo API:", err);
+    }
   }
 
   // Set cookies
