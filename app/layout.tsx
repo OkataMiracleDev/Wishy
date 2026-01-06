@@ -3,7 +3,7 @@ import "./globals.css";
 import { manrope, cherryBombOne } from "@/lib/fonts";
 import BottomNav from "@/components/BottomNav";
 import { Toaster } from "react-hot-toast";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wishy-app.vercel.app"),
@@ -28,15 +28,24 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://wishy-app.vercel.app/",
     title: "Wishy — Dream, Plan, Save",
-    description: "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
+    description:
+      "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
     siteName: "Wishy",
-    images: [{ url: "https://wishy-app.vercel.app/branding/opengraph-image.png?v=20260106", width: 1200, height: 630, type: "image/png" }],
+    images: [
+      {
+        url: "https://wishy-app.vercel.app/og-image-latest",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Wishy — Dream, Plan, Save",
-    description: "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
-    images: ["https://wishy-app.vercel.app/branding/twitter-image.png?v=20260106"],
+    description:
+      "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
+    images: ["https://wishy-app.vercel.app/twitter-image-latest"],
   },
   robots: {
     index: true,
@@ -53,8 +62,8 @@ export const metadata: Metadata = {
     canonical: "https://wishy-app.vercel.app/",
   },
   icons: {
-    icon: [{ url: "https://wishy-app.vercel.app/branding/icon.png?v=20260106" }],
-    apple: [{ url: "https://wishy-app.vercel.app/branding/apple-icon.png?v=20260106" }],
+    icon: [{ url: "https://wishy-app.vercel.app/icon-latest" }],
+    apple: [{ url: "https://wishy-app.vercel.app/apple-icon-latest" }],
   },
   themeColor: "#0a0a0a",
 };
