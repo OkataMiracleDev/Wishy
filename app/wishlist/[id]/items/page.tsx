@@ -25,7 +25,9 @@ export default function WishlistItemsPage() {
   const [currency, setCurrency] = useState("NGN");
   const [name, setName] = useState("");
   const [price, setPrice] = useState<string | number>("");
-  const [importance, setImportance] = useState<"low" | "medium" | "high">("medium");
+  const [importance, setImportance] = useState<"low" | "medium" | "high">(
+    "medium"
+  );
   const [image, setImage] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +36,14 @@ export default function WishlistItemsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API_URL}/api/wishlist/items/${id}`, { credentials: "include" });
+        let res = await fetch(`/api/wishlist/items/${id}`, {
+          credentials: "include",
+        }).catch(() => null as any);
+        if (!res || !res.ok) {
+          res = await fetch(`${API_URL}/api/wishlist/items/${id}`, {
+            credentials: "include",
+          });
+        }
         const data = await res.json().catch(() => ({}));
         if (data?.items) setItems(data.items);
         if (data?.wishlist) {
@@ -60,7 +69,11 @@ export default function WishlistItemsPage() {
   useEffect(() => {
     setDeckOrder(stack.map((it) => it._id));
   }, [stack]);
-  const dragStart = useRef<{x:number;y:number;t:number}>({x:0,y:0,t:0});
+  const dragStart = useRef<{ x: number; y: number; t: number }>({
+    x: 0,
+    y: 0,
+    t: 0,
+  });
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [dragId, setDragId] = useState<string>("");
@@ -127,7 +140,8 @@ export default function WishlistItemsPage() {
       } else {
         toast.error("Failed to add item");
       }
-    } catch (e) {} finally {
+    } catch (e) {
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -149,7 +163,9 @@ export default function WishlistItemsPage() {
 
       <div className="relative mx-auto max-w-md px-6 py-8 sm:max-w-lg z-10">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className={`${cherryBombOne.className} text-3xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400`}>
+          <h1
+            className={`${cherryBombOne.className} text-3xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400`}
+          >
             {wishlistName || "Wishlist"} Items
           </h1>
           <button
@@ -161,7 +177,7 @@ export default function WishlistItemsPage() {
           </button>
         </div>
         <div className="relative h-0">
-          <div className="absolute -top-10 right-0 hidden sm:flex gap-2">
+          <div className="absolute -top-10 right-[50%] translate-x-[50%] hidden sm:flex gap-2">
             <button
               type="button"
               onClick={prevCard}
@@ -182,7 +198,9 @@ export default function WishlistItemsPage() {
         <div className="rounded-[2rem] bg-[#161618] p-6 border border-white/5 shadow-xl mb-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-zinc-400 ml-1">Item Name</label>
+              <label className="text-xs font-medium text-zinc-400 ml-1">
+                Item Name
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Macbook Pro"
@@ -192,7 +210,9 @@ export default function WishlistItemsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-zinc-400 ml-1">Price ({currency})</label>
+              <label className="text-xs font-medium text-zinc-400 ml-1">
+                Price ({currency})
+              </label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -203,7 +223,9 @@ export default function WishlistItemsPage() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs font-medium text-zinc-400 ml-1">Description</label>
+              <label className="text-xs font-medium text-zinc-400 ml-1">
+                Description
+              </label>
               <textarea
                 placeholder="Details about this item..."
                 value={description}
@@ -212,15 +234,19 @@ export default function WishlistItemsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-zinc-400 ml-1">Importance</label>
+              <label className="text-xs font-medium text-zinc-400 ml-1">
+                Importance
+              </label>
               <div className="flex gap-2">
-                {(["low","medium","high"] as const).map((lvl) => (
+                {(["low", "medium", "high"] as const).map((lvl) => (
                   <button
                     key={lvl}
                     type="button"
                     onClick={() => setImportance(lvl)}
                     className={`flex-1 rounded-xl border px-2 py-3 text-xs font-medium uppercase tracking-wider transition-all ${
-                      importance === lvl ? "border-purple-500 bg-purple-500/20 text-purple-400" : "border-white/10 bg-black/20 text-zinc-500 hover:bg-white/5"
+                      importance === lvl
+                        ? "border-purple-500 bg-purple-500/20 text-purple-400"
+                        : "border-white/10 bg-black/20 text-zinc-500 hover:bg-white/5"
                     }`}
                   >
                     {lvl}
@@ -229,12 +255,18 @@ export default function WishlistItemsPage() {
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-zinc-400 ml-1">Image</label>
+              <label className="text-xs font-medium text-zinc-400 ml-1">
+                Image
+              </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
                   const f = e.target.files?.[0] || null;
+                  if (f && f.size > 5 * 1024 * 1024) {
+                    toast.error("Image must be 5MB or less");
+                    return;
+                  }
                   setImage(f);
                 }}
                 className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-500/10 file:text-purple-400 hover:file:bg-purple-500/20"
@@ -255,19 +287,30 @@ export default function WishlistItemsPage() {
           {deckOrder.map((idRef, idx) => {
             const it = items.find((x) => x._id === idRef) || stack[idx];
             const offset = deckOrder.length - idx - 1;
-            const rotate = idx === deckOrder.length - 1 ? 0 : (((Array.from(idRef).reduce((s,c)=>s+c.charCodeAt(0),0) % 5) - 2));
+            const rotate =
+              idx === deckOrder.length - 1
+                ? 0
+                : (Array.from(idRef).reduce((s, c) => s + c.charCodeAt(0), 0) %
+                    5) -
+                  2;
             const isTop = idx === deckOrder.length - 1;
             return (
               <div
                 key={it._id}
                 className="absolute inset-0 rounded-[2rem] border border-white/10 bg-[#161618] shadow-xl touch-none"
                 style={{
-                  transform: isTop ? `translate(${dragX}px, ${dragY}px) rotate(${rotate}deg)` : `translateY(${offset * 12}px) rotate(${rotate}deg)`,
+                  transform: isTop
+                    ? `translate(${dragX}px, ${dragY}px) rotate(${rotate}deg)`
+                    : `translateY(${offset * 12}px) rotate(${rotate}deg)`,
                   zIndex: 10 + idx,
                 }}
                 onPointerDown={(e) => {
                   if (!isTop) return;
-                  dragStart.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+                  dragStart.current = {
+                    x: e.clientX,
+                    y: e.clientY,
+                    t: Date.now(),
+                  };
                   setDragId(it._id);
                   const startX = e.clientX;
                   const startY = e.clientY;
@@ -299,19 +342,33 @@ export default function WishlistItemsPage() {
               >
                 <div className="p-6 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="text-sm text-purple-400 font-semibold uppercase tracking-wider">{it.importance}</div>
-                    <div className="text-sm text-zinc-400">{currency} {Number(it.price).toLocaleString()}</div>
+                    <div className="text-sm text-purple-400 font-semibold uppercase tracking-wider">
+                      {it.importance}
+                    </div>
+                    <div className="text-sm text-zinc-400">
+                      {currency} {Number(it.price).toLocaleString()}
+                    </div>
                   </div>
-                  <div className="text-2xl font-bold text-white mb-4">{it.name}</div>
+                  <div className="text-2xl font-bold text-white mb-4">
+                    {it.name}
+                  </div>
                   {it.description ? (
-                    <div className="text-sm text-zinc-400 mb-4">{it.description}</div>
+                    <div className="text-sm text-zinc-400 mb-4">
+                      {it.description}
+                    </div>
                   ) : null}
                   <div className="flex-1 rounded-2xl bg-black/20 border border-white/10 overflow-hidden">
                     {it.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={it.imageUrl} alt={it.name} className="w-full h-full object-cover" />
+                      <img
+                        src={it.imageUrl}
+                        alt={it.name}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-600">No image</div>
+                      <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                        No image
+                      </div>
                     )}
                   </div>
                 </div>

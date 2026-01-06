@@ -42,6 +42,10 @@ export default function WishlistPage() {
             if (!canSubmit) return;
             setIsSubmitting(true);
             try {
+              if (image && image.size > 5 * 1024 * 1024) {
+                toast.error("Image must be 5MB or less");
+                return;
+              }
               const formData = new FormData();
               formData.append("name", name);
               formData.append("currency", currency);
@@ -104,9 +108,12 @@ export default function WishlistPage() {
               type="file"
               accept="image/*"
               onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  setImage(e.target.files[0]);
+                const f = e.target.files?.[0] || null;
+                if (f && f.size > 5 * 1024 * 1024) {
+                  toast.error("Image must be 5MB or less");
+                  return;
                 }
+                if (f) setImage(f);
               }}
               className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-500/10 file:text-purple-400 hover:file:bg-purple-500/20"
             />

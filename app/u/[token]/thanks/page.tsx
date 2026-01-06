@@ -11,7 +11,10 @@ export default function ThanksPage({ params }: { params: { token: string } }) {
         return;
       }
       try {
-        const res = await fetch(`${API_URL}/api/public/profile/${params.token}`);
+        let res = await fetch(`/api/public/profile/${params.token}`).catch(() => null as any);
+        if (!res || !res.ok) {
+          res = await fetch(`${API_URL}/api/public/profile/${params.token}`);
+        }
         const data = await res.json().catch(() => ({}));
         if (data?.profile?.thankYouMessage) {
           setMessage(String(data.profile.thankYouMessage));
