@@ -27,19 +27,15 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://wishy-app.vercel.app/",
     title: "Wishy — Dream, Plan, Save",
-    description:
-      "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
+    description: "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
     siteName: "Wishy",
-    images: [
-      { url: "/branding/opengraph-image.png", width: 1200, height: 630 },
-    ],
+    images: [{ url: "https://wishy-app.vercel.app/branding/opengraph-image.png?v=20260106", width: 1200, height: 630, type: "image/png" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Wishy — Dream, Plan, Save",
-    description:
-      "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
-    images: ["/branding/twitter-image.png"],
+    description: "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
+    images: ["https://wishy-app.vercel.app/branding/twitter-image.png?v=20260106"],
   },
   robots: {
     index: true,
@@ -56,9 +52,8 @@ export const metadata: Metadata = {
     canonical: "https://wishy-app.vercel.app/",
   },
   icons: {
-    icon: [{ url: "/favicon.ico" }, { url: "/branding/icon.png" }],
-    apple: [{ url: "/branding/apple-icon.png" }],
-    shortcut: ["/favicon.ico"],
+    icon: [{ url: "https://wishy-app.vercel.app/branding/icon.png?v=20260106" }],
+    apple: [{ url: "https://wishy-app.vercel.app/branding/apple-icon.png?v=20260106" }],
   },
   themeColor: "#0a0a0a",
 };
