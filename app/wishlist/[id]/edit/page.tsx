@@ -26,6 +26,7 @@ export default function EditWishlistPage() {
   const [saving, setSaving] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string>("");
   const [itemDraft, setItemDraft] = useState<{ name: string; price: string; importance: "low" | "medium" | "high"; description: string }>({ name: "", price: "", importance: "medium", description: "" });
+  const [itemImage, setItemImage] = useState<File | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -48,6 +49,7 @@ export default function EditWishlistPage() {
   const startEditItem = (it: Item) => {
     setEditingItemId(it._id);
     setItemDraft({ name: it.name, price: String(it.price), importance: it.importance, description: it.description || "" });
+    setItemImage(null);
   };
 
   const saveWishlist = async () => {
@@ -82,6 +84,10 @@ export default function EditWishlistPage() {
     if (!editingItemId) return;
     setSaving(true);
     try {
+      if (itemImage && itemImage.size > 5 * 1024 * 1024) {
+        toast.error("Image must be 5MB or less");
+        return;
+      }
       const fd = new FormData();
       fd.append("wishlistId", id);
       fd.append("itemId", editingItemId);
@@ -89,6 +95,7 @@ export default function EditWishlistPage() {
       fd.append("price", itemDraft.price);
       fd.append("importance", itemDraft.importance);
       fd.append("description", itemDraft.description);
+      if (itemImage) fd.append("image", itemImage);
       let res = await fetch(`/api/wishlist/item/update`, { method: "POST", credentials: "include", body: fd }).catch(() => null as any);
       if (!res || !res.ok) {
         res = await fetch(`${API_URL}/api/wishlist/item/update`, { method: "POST", credentials: "include", body: fd });
@@ -97,6 +104,7 @@ export default function EditWishlistPage() {
       if (data?.ok) {
         setItems(data.wishlist.items || []);
         setEditingItemId("");
+        setItemImage(null);
         toast.success("Item updated");
       } else {
         toast.error("Failed to update item");
@@ -220,16 +228,31 @@ export default function EditWishlistPage() {
                         <option key={lvl} value={lvl} className="bg-[#161618]">{lvl}</option>
                       ))}
                     </select>
-                    <textarea
-                      value={itemDraft.description}
-                      onChange={(e) => setItemDraft((d) => ({ ...d, description: e.target.value }))}
-                      className="sm:col-span-2 w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-sm text-white min-h-[60px]"
-                    />
-                    <div className="sm:col-span-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={saveItem}
-                        disabled={saving}
+                <textarea
+                  value={itemDraft.description}
+                  onChange={(e) => setItemDraft((d) => ({ ...d, description: e.target.value }))}
+                  className="sm:col-span-2 w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-sm text-white min-h-[60px]"
+                />
+                <div className="sm:col-span-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      if (f && f.size > 5 * 1024 * 1024) {
+                        toast.error("Image must be 5MB or less");
+                        return;
+                      }
+                      setItemImage(f);
+                    }}
+                    className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-500/10 file:text-purple-400 hover:file:bg-purple-500/20"
+                  />
+                </div>
+                <div className="sm:col-span-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={saveItem}
+                    disabled={saving}
                         className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-black hover:bg-zinc-200 disabled:opacity-50"
                       >
                         {saving ? "Saving..." : "Save"}
@@ -280,4 +303,3 @@ export default function EditWishlistPage() {
     </main>
   );
 }
-
