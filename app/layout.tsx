@@ -3,7 +3,7 @@ import "./globals.css";
 import { manrope, cherryBombOne } from "@/lib/fonts";
 import BottomNav from "@/components/BottomNav";
 import { Toaster } from "react-hot-toast";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wishy-app.vercel.app"),
@@ -90,6 +90,7 @@ export default function RootLayout({
         />
         {children}
         <BottomNav />
+        <Analytics />
       </body>
     </html>
   );
