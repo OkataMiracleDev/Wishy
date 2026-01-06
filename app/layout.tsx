@@ -10,21 +10,36 @@ export const metadata: Metadata = {
     default: "Wishy — Dream, Plan, Save",
     template: "Wishy | %s",
   },
-  description: "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
-  keywords: ["wishlists", "budget", "saving", "goals", "finance", "Nigeria", "NGN", "USD", "planning"],
+  description:
+    "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
+  keywords: [
+    "wishlists",
+    "budget",
+    "saving",
+    "goals",
+    "finance",
+    "Nigeria",
+    "NGN",
+    "USD",
+    "planning",
+  ],
   openGraph: {
     type: "website",
     url: "https://wishy-app.vercel.app/",
     title: "Wishy — Dream, Plan, Save",
-    description: "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
+    description:
+      "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
     siteName: "Wishy",
-    images: [{ url: "/opengraph-image" }],
+    images: [
+      { url: "/branding/opengraph-image.png", width: 1200, height: 630 },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Wishy — Dream, Plan, Save",
-    description: "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
-    images: ["/twitter-image"],
+    description:
+      "Create wishlists, plan your savings, and track progress with a simple, fun dashboard.",
+    images: ["/branding/twitter-image.png"],
   },
   robots: {
     index: true,
@@ -41,8 +56,8 @@ export const metadata: Metadata = {
     canonical: "https://wishy-app.vercel.app/",
   },
   icons: {
-    icon: [{ url: "/favicon.ico" }, { url: "/icon" }],
-    apple: [{ url: "/apple-icon" }],
+    icon: [{ url: "/favicon.ico" }, { url: "/branding/icon.png" }],
+    apple: [{ url: "/branding/apple-icon.png" }],
     shortcut: ["/favicon.ico"],
   },
   themeColor: "#0a0a0a",
@@ -55,14 +70,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${manrope.variable} ${cherryBombOne.variable} antialiased`}>
-        <Toaster position="top-center" toastOptions={{
-          style: {
-            background: '#333',
-            color: '#fff',
-            borderRadius: '12px',
-          }
-        }} />
+      <body
+        className={`${manrope.variable} ${cherryBombOne.variable} antialiased`}
+      >
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: "#333",
+              color: "#fff",
+              borderRadius: "12px",
+            },
+          }}
+        />
         {children}
         <BottomNav />
       </body>
