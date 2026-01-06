@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import { cherryBombOne } from "@/lib/fonts";
 
@@ -91,6 +92,10 @@ export default function WishlistItemsPage() {
     if (!name || !price) return;
     setIsSubmitting(true);
     try {
+      if (image && image.size > 5 * 1024 * 1024) {
+        toast.error("Image must be 5MB or less");
+        return;
+      }
       const formData = new FormData();
       formData.append("wishlistId", id);
       formData.append("name", name);
@@ -98,11 +103,18 @@ export default function WishlistItemsPage() {
       formData.append("importance", importance);
       formData.append("description", description);
       if (image) formData.append("image", image);
-      const res = await fetch(`${API_URL}/api/wishlist/item/add`, {
+      let res = await fetch(`/api/wishlist/item/add`, {
         method: "POST",
         credentials: "include",
         body: formData,
-      });
+      }).catch(() => null as any);
+      if (!res || !res.ok) {
+        res = await fetch(`${API_URL}/api/wishlist/item/add`, {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+      }
       const data = await res.json().catch(() => ({}));
       if (data?.wishlist?.items) {
         setItems(data.wishlist.items);
@@ -111,6 +123,9 @@ export default function WishlistItemsPage() {
         setImportance("medium");
         setImage(null);
         setDescription("");
+        toast.success("Item added");
+      } else {
+        toast.error("Failed to add item");
       }
     } catch (e) {} finally {
       setIsSubmitting(false);
@@ -146,7 +161,7 @@ export default function WishlistItemsPage() {
           </button>
         </div>
         <div className="relative h-0">
-          <div className="absolute -top-10 right-0 flex gap-2">
+          <div className="absolute -top-10 right-0 hidden sm:flex gap-2">
             <button
               type="button"
               onClick={prevCard}

@@ -9,7 +9,7 @@ try {
   cloudinary = require('cloudinary').v2;
   const multer = require('multer');
   const storage = multer.memoryStorage();
-  upload = multer({ storage });
+  upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
   
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -93,6 +93,33 @@ router.post("/create", upload.single('image'), async (req, res) => {
   return res.json({ ok: true, wishlist: user.wishlists[user.wishlists.length - 1] });
 });
 
+router.post("/update", upload.single('image'), async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const { id, name, currency, plan, importance } = req.body;
+  if (!id) return res.status(400).json({ ok: false, error: "invalid_input" });
+  let imageUrl = req.body.imageUrl || "";
+  if (req.file && cloudinary) {
+    try {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const result = await cloudinary.uploader.upload(dataURI, { folder: "wishy/wishlists" });
+      imageUrl = result.secure_url;
+    } catch {}
+  }
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ ok: false });
+  const w = user.wishlists.id(id);
+  if (!w || w.deletedAt) return res.status(404).json({ ok: false });
+  if (typeof name === "string") w.name = String(name).trim();
+  if (typeof currency === "string") w.currency = currency;
+  if (typeof plan === "string") w.plan = plan;
+  if (typeof importance === "string") w.importance = importance;
+  if (imageUrl) w.imageUrl = imageUrl;
+  await user.save();
+  return res.json({ ok: true, wishlist: w });
+});
+
 router.post("/item/add", upload.single('image'), async (req, res) => {
   const email = getEmailFromSession(req);
   if (!email) return res.status(401).json({ ok: false });
@@ -127,6 +154,51 @@ router.post("/item/add", upload.single('image'), async (req, res) => {
   return res.json({ ok: true, wishlist: w });
 });
 
+router.post("/item/update", upload.single('image'), async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const { wishlistId, itemId, name, price, importance, description } = req.body;
+  if (!wishlistId || !itemId) return res.status(400).json({ ok: false, error: "invalid_input" });
+  let imageUrl = req.body.imageUrl || "";
+  if (req.file && cloudinary) {
+    try {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const result = await cloudinary.uploader.upload(dataURI, { folder: "wishy/items" });
+      imageUrl = result.secure_url;
+    } catch {}
+  }
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ ok: false });
+  const w = user.wishlists.id(wishlistId);
+  if (!w || w.deletedAt) return res.status(404).json({ ok: false });
+  const it = (w.items || []).id(itemId);
+  if (!it) return res.status(404).json({ ok: false });
+  if (typeof name === "string") it.name = String(name).trim();
+  if (typeof price !== "undefined") it.price = Number(price);
+  if (typeof importance === "string") it.importance = importance;
+  if (typeof description === "string") it.description = String(description).trim();
+  if (imageUrl) it.imageUrl = imageUrl;
+  w.goal = (w.items || []).reduce((sum, x) => sum + Number(x.price || 0), 0);
+  await user.save();
+  return res.json({ ok: true, wishlist: w });
+});
+
+router.delete("/item/:wishlistId/:itemId", async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const { wishlistId, itemId } = req.params;
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ ok: false });
+  const w = user.wishlists.id(wishlistId);
+  if (!w || w.deletedAt) return res.status(404).json({ ok: false });
+  const idx = (w.items || []).findIndex((x) => String(x._id) === String(itemId));
+  if (idx === -1) return res.status(404).json({ ok: false });
+  w.items.splice(idx, 1);
+  w.goal = (w.items || []).reduce((sum, x) => sum + Number(x.price || 0), 0);
+  await user.save();
+  return res.json({ ok: true, wishlist: w });
+});
 router.get("/items/:wishlistId", async (req, res) => {
   const email = getEmailFromSession(req);
   if (!email) return res.status(401).json({ ok: false });
