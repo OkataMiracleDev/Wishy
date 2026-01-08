@@ -55,17 +55,20 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// Signin
+// Signin (email or username)
 router.post("/signin", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, identifier, password } = req.body;
+    const id = (email || identifier || "").trim();
 
-    if (!email || !password) {
+    if (!id || !password) {
       return res.status(400).json({ ok: false, error: "missing_fields" });
     }
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      $or: [{ email: id }, { nickname: id }],
+    });
     if (!user) {
       return res.status(401).json({ ok: false, error: "invalid_credentials" });
     }
@@ -123,14 +126,17 @@ router.post("/check-nickname", async (req, res) => {
   }
 });
 
-// Check Email Existence
+// Check identifier existence (email or username)
 router.post("/check-email", async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
+    const { email, identifier } = req.body;
+    const id = (email || identifier || "").trim();
+    if (!id) {
       return res.status(400).json({ ok: false, error: "missing_email" });
     }
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      $or: [{ email: id }, { nickname: id }],
+    });
     return res.json({ ok: true, exists: !!user });
   } catch (error) {
     console.error("Check email error:", error);

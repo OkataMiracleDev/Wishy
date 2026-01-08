@@ -141,6 +141,25 @@ export default function BudgetPage() {
         {/* Payment History */}
         <div className="mb-8">
           <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">Payment History</h2>
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  let res = await fetch(`/api/profile/payments/clear`, { method: "POST", credentials: "include" }).catch(() => null as any);
+                  if (!res || !res.ok) {
+                    res = await fetch(`${API_URL}/api/profile/payments/clear`, { method: "POST", credentials: "include" });
+                  }
+                  if (res && res.ok) {
+                    setPayments([]);
+                  }
+                } catch {}
+              }}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white hover:bg-white/10"
+            >
+              Clear History
+            </button>
+          </div>
           <div className="space-y-3">
             {payments.length === 0 ? (
               <p className="text-zinc-600 text-sm">No payments yet.</p>

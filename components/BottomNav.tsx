@@ -13,7 +13,7 @@ export default function BottomNav() {
     return null;
   }
 
-  const knownRoots = new Set(["home", "budget", "qa", "profile", "wishlist", "signin", "signup"]);
+  const knownRoots = new Set(["home", "budget", "qa", "profile", "wallet", "wishlist", "signin", "signup"]);
   const segments = pathname.split("/").filter(Boolean);
   const isUsernameShare = segments.length >= 2 && !knownRoots.has(segments[0]);
   const isPublicShare = pathname.startsWith("/u/") || isUsernameShare;
@@ -41,6 +41,12 @@ export default function BottomNav() {
             ?
           </span>
           <span>Q/A</span>
+        </Link>
+        <Link href="/wallet" className="flex flex-col items-center gap-1 group">
+          <span className={`h-7 w-7 rounded-full flex items-center justify-center text-[11px] transition-colors ${pathname === '/wallet' ? 'bg-white text-black' : 'border border-white text-white group-hover:bg-white/20'}`}>
+            W
+          </span>
+          <span>Wallet</span>
         </Link>
         <Link href="/profile" className="flex flex-col items-center gap-1 group">
           <span className={`h-7 w-7 rounded-full flex items-center justify-center text-[11px] transition-colors ${pathname === '/profile' ? 'bg-white text-black' : 'border border-white text-white group-hover:bg-white/20'}`}>

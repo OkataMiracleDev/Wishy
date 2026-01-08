@@ -77,4 +77,55 @@ router.get("/payments", async (req, res) => {
   return res.json({ ok: true, payments: user.payments || [] });
 });
 
+// Clear payments history (does not affect balances)
+router.post("/payments/clear", async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ ok: false });
+  user.payments = [];
+  await user.save();
+  return res.json({ ok: true });
+});
+
+// Wallet balance and transactions
+router.get("/wallet", async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const user = await User.findOne({ email }).lean();
+  if (!user) return res.status(404).json({ ok: false });
+  return res.json({ ok: true, balance: Number(user.walletBalance || 0), transactions: user.walletTransactions || [] });
+});
+
+// Wallet withdraw
+router.post("/wallet/withdraw", async (req, res) => {
+  const email = getEmailFromSession(req);
+  if (!email) return res.status(401).json({ ok: false });
+  const { amount, idempotencyKey } = req.body;
+  const amt = Number(amount || 0);
+  if (!amt || amt <= 0) return res.status(400).json({ ok: false, error: "invalid_amount" });
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ ok: false });
+  if (!user.accountNumber || !user.bankName || !user.accountName) {
+    return res.status(400).json({ ok: false, error: "missing_account" });
+  }
+  // check idempotency
+  if (idempotencyKey && (user.walletTransactions || []).find((t) => t.reference === String(idempotencyKey))) {
+    return res.json({ ok: true }); // already processed
+  }
+  if (Number(user.walletBalance || 0) < amt) {
+    return res.status(400).json({ ok: false, error: "insufficient_funds" });
+  }
+  user.walletBalance = Number(user.walletBalance || 0) - amt;
+  user.walletTransactions.push({
+    type: "withdraw",
+    amount: amt,
+    reference: idempotencyKey || `WD-${Date.now()}`,
+    status: "completed",
+    meta: { to: { accountNumber: user.accountNumber, bankName: user.bankName, accountName: user.accountName } },
+  });
+  await user.save();
+  return res.json({ ok: true, balance: user.walletBalance });
+});
+
 module.exports = router;

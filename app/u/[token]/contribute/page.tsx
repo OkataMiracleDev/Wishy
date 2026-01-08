@@ -18,6 +18,7 @@ export default function ContributePage() {
   const [imageData, setImageData] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedMessage, setSubmittedMessage] = useState("");
+  const [method, setMethod] = useState<"external" | "wallet">("external");
 
   useEffect(() => {
     async function load() {
@@ -54,6 +55,22 @@ export default function ContributePage() {
         )}
 
         <div className="rounded-2xl bg-[#161618] p-6 border border-white/5 shadow-xl space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => setMethod("external")}
+              className={`flex-1 rounded-xl px-3 py-2 text-xs font-semibold ${method === "external" ? "bg-white text-black" : "border border-white/10 text-white"}`}
+            >
+              Pay to External Account
+            </button>
+            <button
+              type="button"
+              onClick={() => setMethod("wallet")}
+              className={`flex-1 rounded-xl px-3 py-2 text-xs font-semibold ${method === "wallet" ? "bg-white text-black" : "border border-white/10 text-white"}`}
+            >
+              Pay to Wallet (Flutterwave)
+            </button>
+          </div>
           <div>
             <label className="text-xs font-medium text-zinc-400 ml-1">Select Wishlist</label>
             <select
@@ -117,43 +134,32 @@ export default function ContributePage() {
             />
           </div>
 
-          <div>
-            <label className="text-xs font-medium text-zinc-400 ml-1">Receipt Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const reader = new FileReader();
-                reader.onload = () => setImageData(String(reader.result || ""));
-                reader.readAsDataURL(f);
-              }}
-              className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-500/10 file:text-purple-400 hover:file:bg-purple-500/20"
-            />
-          </div>
+          {method === "external" && (
+            <div>
+              <label className="text-xs font-medium text-zinc-400 ml-1">Receipt Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  const reader = new FileReader();
+                  reader.onload = () => setImageData(String(reader.result || ""));
+                  reader.readAsDataURL(f);
+                }}
+                className="w-full rounded-xl bg-black/20 border border-white/10 px-4 py-3 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-500/10 file:text-purple-400 hover:file:bg-purple-500/20"
+              />
+            </div>
+          )}
 
-          <button
-            type="button"
-            disabled={!wishlistId || !name || !email || !amount || !imageData || isSubmitting}
-            onClick={async () => {
-              setIsSubmitting(true);
-              try {
-                let res = await fetch(`/api/public/contribute`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    token,
-                    wishlistId,
-                    itemId,
-                    amount: Number(amount),
-                    name,
-                    email,
-                    imageData,
-                  }),
-                }).catch(() => null as any);
-                if (!res || !res.ok) {
-                  res = await fetch(`${API_URL}/api/public/contribute`, {
+          {method === "external" ? (
+            <button
+              type="button"
+              disabled={!wishlistId || !name || !email || !amount || !imageData || isSubmitting}
+              onClick={async () => {
+                setIsSubmitting(true);
+                try {
+                  let res = await fetch(`/api/public/contribute`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -165,20 +171,82 @@ export default function ContributePage() {
                       email,
                       imageData,
                     }),
-                  });
+                  }).catch(() => null as any);
+                  if (!res || !res.ok) {
+                    res = await fetch(`${API_URL}/api/public/contribute`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        token,
+                        wishlistId,
+                        itemId,
+                        amount: Number(amount),
+                        name,
+                        email,
+                        imageData,
+                      }),
+                    });
+                  }
+                  const data = await res.json().catch(() => ({}));
+                  if (data?.ok) {
+                    router.push(`/u/${token}/thanks`);
+                  }
+                } catch (e) {} finally {
+                  setIsSubmitting(false);
                 }
-                const data = await res.json().catch(() => ({}));
-                if (data?.ok) {
-                  router.push(`/u/${token}/thanks`);
+              }}
+              className="w-full rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-zinc-200 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? "Submitting..." : "Done"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!wishlistId || !name || !email || !amount || isSubmitting}
+              onClick={async () => {
+                setIsSubmitting(true);
+                try {
+                  let res = await fetch(`/api/public/wallet/initiate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      token,
+                      amount: Number(amount),
+                      name,
+                      email,
+                      wishlistId,
+                      itemId,
+                    }),
+                  }).catch(() => null as any);
+                  if (!res || !res.ok) {
+                    res = await fetch(`${API_URL}/api/public/wallet/initiate`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        token,
+                        amount: Number(amount),
+                        name,
+                        email,
+                        wishlistId,
+                        itemId,
+                      }),
+                    });
+                  }
+                  const data = await res.json().catch(() => ({}));
+                  if (data?.ok && data?.payUrl) {
+                    window.location.href = String(data.payUrl);
+                  } else {
+                    setIsSubmitting(false);
+                  }
+                } catch (e) {
+                  setIsSubmitting(false);
                 }
-              } catch (e) {} finally {
-                setIsSubmitting(false);
-              }
-            }}
-            className="w-full rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-zinc-200 transition-colors disabled:opacity-50"
-          >
-            {isSubmitting ? "Submitting..." : "Done"}
-          </button>
+              }}
+              className="w-full rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-zinc-200 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? "Redirecting..." : "Pay via Flutterwave"}
+            </button>
+          )}
         </div>
       </div>
     </main>

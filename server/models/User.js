@@ -91,6 +91,20 @@ const UserSchema = new mongoose.Schema(
       ],
       default: [],
     },
+    walletBalance: { type: Number, default: 0, min: 0 },
+    walletTransactions: {
+      type: [
+        {
+          type: { type: String, enum: ["deposit", "withdraw"], required: true },
+          amount: { type: Number, required: true, min: 0 },
+          reference: { type: String, trim: true },
+          status: { type: String, enum: ["pending", "completed", "failed"], default: "pending" },
+          meta: { type: Object },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

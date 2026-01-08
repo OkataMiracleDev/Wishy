@@ -9,8 +9,8 @@ import toast from "react-hot-toast";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function SignInPage() {
-  const [step, setStep] = useState<"email" | "password" | "done">("email");
-  const [email, setEmail] = useState<string>("");
+  const [step, setStep] = useState<"identifier" | "password" | "done">("identifier");
+  const [identifier, setIdentifier] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +23,7 @@ export default function SignInPage() {
       ? "/onboarding/see-you-later.png"
       : "/onboarding/sign-in.png";
 
-  const handleEmailNext = async () => {
+  const handleIdentifierNext = async () => {
     setEmailError("");
     setIsLoading(true);
     try {
@@ -31,24 +31,24 @@ export default function SignInPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ identifier }),
       }).catch(() => null as any);
       if (!res || !res.ok) {
         res = await fetch(`${API_URL}/api/auth/check-email`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ identifier }),
         });
       }
       const data = await res.json();
       if (data.exists) {
         setStep("password");
       } else {
-        setEmailError("Account not found. Please sign up.");
+        setEmailError("Account not found. Try your email or username, or sign up.");
       }
     } catch (error) {
-      console.error("Error checking email:", error);
+      console.error("Error checking identifier:", error);
       setEmailError("Something went wrong. Try again.");
     } finally {
       setIsLoading(false);
@@ -62,14 +62,14 @@ export default function SignInPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       }).catch(() => null as any);
       if (!res || !res.ok) {
         res = await fetch(`${API_URL}/api/auth/signin`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ identifier, password }),
         });
       }
       if (res.ok) {
@@ -102,12 +102,12 @@ export default function SignInPage() {
         </div>
         <div className="text-center z-10 max-w-md">
           <h2 className={`${cherryBombOne.className} text-4xl mb-4`}>
-            {step === "email" && "Welcome Back!"}
+            {step === "identifier" && "Welcome Back!"}
             {step === "password" && "Secure Login"}
             {step === "done" && "You're In!"}
           </h2>
           <p className="text-lg text-white/90">
-            {step === "email" && "We missed you. Let's get you back in."}
+            {step === "identifier" && "We missed you. Let's get you back in."}
             {step === "password" && "Enter your secret key."}
             {step === "done" && "Redirecting you to your wishes..."}
           </p>
@@ -131,35 +131,35 @@ export default function SignInPage() {
             <h2
               className={`${cherryBombOne.className} text-4xl mb-2 text-black`}
             >
-              {step === "email"
+              {step === "identifier"
                 ? "Sign In"
                 : step === "password"
                 ? "Password"
                 : "All Set!"}
             </h2>
             <p className="text-zinc-500">
-              {step === "email"
-                ? "Enter your email to continue"
+              {step === "identifier"
+                ? "Enter your email or username to continue"
                 : step === "password"
-                ? `Welcome back, ${email}`
+                ? `Welcome back, ${identifier}`
                 : "Redirecting to home..."}
             </p>
           </div>
-          {step === "email" && (
+          {step === "identifier" && (
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Email Address
+                  Email or Username
                 </label>
                 <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  placeholder="you@example.com or your_username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   onKeyDown={(e) =>
                     e.key === "Enter" &&
-                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
-                    handleEmailNext()
+                    identifier.trim().length > 0 &&
+                    handleIdentifierNext()
                   }
                   className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-black placeholder:text-zinc-400 outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20 transition-all"
                 />
@@ -170,9 +170,9 @@ export default function SignInPage() {
               <button
                 type="button"
                 disabled={
-                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || isLoading
+                  identifier.trim().length === 0 || isLoading
                 }
-                onClick={handleEmailNext}
+                onClick={handleIdentifierNext}
                 className="w-full rounded-2xl bg-[#8B5CF6] py-4 text-white font-semibold shadow-lg shadow-[#8B5CF6]/20 hover:bg-[#7c4dff] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
