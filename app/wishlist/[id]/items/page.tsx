@@ -297,7 +297,7 @@ export default function WishlistItemsPage() {
             return (
               <div
                 key={it._id}
-                className="absolute inset-0 rounded-[2rem] border border-white/10 bg-[#161618] shadow-xl touch-none"
+                className="absolute inset-0 rounded-[2rem] border border-white/10 bg-[#161618] shadow-xl touch-none smooth-transform"
                 style={{
                   transform: isTop
                     ? `translate(${dragX}px, ${dragY}px) rotate(${rotate}deg)`

@@ -143,7 +143,7 @@ export default function PublicProfilePage() {
                   return (
                     <div
                       key={`${it._id}-${idx}`}
-                      className="absolute inset-0 rounded-[1.5rem] border border-white/10 bg-[#121214] shadow-xl touch-none"
+                      className="absolute inset-0 rounded-[1.5rem] border border-white/10 bg-[#121214] shadow-xl touch-none smooth-transform"
                       style={{
                         transform: isTop ? `translate(${dragX}px, ${dragY}px) rotate(${rotate}deg)` : `translateY(${offset * 10}px) rotate(${rotate}deg)`,
                         zIndex: 10 + idx,

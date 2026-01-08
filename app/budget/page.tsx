@@ -98,7 +98,7 @@ export default function BudgetPage() {
           {/* Progress Bar */}
           <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
              <div 
-               className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+               className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 smooth-all"
                style={{ width: `${totalBudget > 0 ? Math.min(100, (totalSaved / totalBudget) * 100) : 0}%` }}
              />
           </div>
@@ -133,7 +133,7 @@ export default function BudgetPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedWishlist(selectedWishlist === w._id ? "" : w._id)}
-                    className="flex items-center justify-between w-full p-4 rounded-2xl bg-[#161618] border border-white/5"
+                    className="flex items-center justify-between w-full p-4 rounded-2xl bg-[#161618] border border-white/5 smooth-colors"
                   >
                     <span className="text-sm font-medium text-white">{w.name} • {(w.importance || "medium")}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
@@ -149,7 +149,7 @@ export default function BudgetPage() {
                     </svg>
                   </button>
                   {selectedWishlist === w._id && (
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-2 space-y-2 smooth-all">
                       {(w.items || []).slice().sort((a, b) => {
                         const order = { high: 3, medium: 2, low: 1 } as any;
                         return order[b.importance] - order[a.importance] || b.price - a.price;

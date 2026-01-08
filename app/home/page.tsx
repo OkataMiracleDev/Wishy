@@ -221,7 +221,7 @@ export default function AuthedHomePage() {
                   </div>
                 </div>
                 {showActionsMap[w._id] && (
-                  <div className="sm:hidden flex flex-col items-end gap-2 mb-3">
+                  <div className="sm:hidden flex flex-col items-end gap-2 mb-3 smooth-all">
                     <Link
                       href={`/wishlist/${w._id}/items`}
                       className="rounded-full bg-purple-500/10 p-3 text-purple-400 hover:bg-purple-500 hover:text-white transition-colors"
@@ -260,7 +260,7 @@ export default function AuthedHomePage() {
                   {/* Progress Bar */}
                   <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-800/50">
                     <div 
-                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_10px_rgba(168,85,247,0.5)] smooth-all"
                       style={{ width: `${Math.min(100, (w.currentSaved / w.goal) * 100)}%` }}
                     />
                   </div>
@@ -277,7 +277,7 @@ export default function AuthedHomePage() {
                       return (
                         <div
                           key={it?._id || `${w._id}-${idx}`}
-                          className="absolute inset-0 rounded-2xl border border-white/10 bg-[#101011] shadow-xl touch-none"
+                          className="absolute inset-0 rounded-2xl border border-white/10 bg-[#101011] shadow-xl touch-none smooth-transform"
                           style={{
                             transform: isTop ? `translate(${dragXMap[w._id] || 0}px, ${dragYMap[w._id] || 0}px) rotate(${rotate}deg)` : `translateY(${offset * 10}px) rotate(${rotate}deg)`,
                             zIndex: 5 + idx,
