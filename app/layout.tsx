@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { manrope, cherryBombOne } from "@/lib/fonts";
 import BottomNav from "@/components/BottomNav";
@@ -65,6 +65,9 @@ export const metadata: Metadata = {
     icon: [{ url: "https://wishy-app.vercel.app/icon-latest" }],
     apple: [{ url: "https://wishy-app.vercel.app/apple-icon-latest" }],
   },
+};
+
+export const viewport: Viewport = {
   themeColor: "#0a0a0a",
 };
 

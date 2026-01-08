@@ -6,7 +6,10 @@ import Image from "next/image";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function SignInPage() {
   const [step, setStep] = useState<"identifier" | "password" | "done">("identifier");
@@ -217,7 +220,7 @@ export default function SignInPage() {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setStep("email")}
+                  onClick={() => setStep("identifier")}
                   className="flex-1 rounded-2xl border border-zinc-200 bg-white py-4 font-semibold text-black hover:bg-zinc-50"
                 >
                   Back
