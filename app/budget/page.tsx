@@ -11,6 +11,7 @@ type Wishlist = {
   goal: number;
   currentSaved: number;
   plan: "daily" | "weekly" | "monthly";
+  importance?: "low" | "medium" | "high";
   items?: { _id: string; name: string; price: number; importance: "low" | "medium" | "high" }[];
 };
 
@@ -22,6 +23,7 @@ export default function BudgetPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [payments, setPayments] = useState<any[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedWishlist, setSelectedWishlist] = useState<string>("");
 
   useEffect(() => {
     async function load() {
@@ -54,12 +56,10 @@ export default function BudgetPage() {
     const per = w.goal / periods;
     return { id: w._id, text: `${w.currency} ${per.toFixed(2)} / ${w.plan}`, name: w.name };
   });
-  const preferenceTable = wishlists
-    .flatMap((w) => (w.items || []).map((it) => ({ ...it, wishlistName: w.name, currency: w.currency })))
-    .sort((a, b) => {
-      const order = { high: 3, medium: 2, low: 1 } as any;
-      return order[b.importance] - order[a.importance] || b.price - a.price;
-    });
+  const sortedWishlists = wishlists.slice().sort((a, b) => {
+    const order = { high: 3, medium: 2, low: 1 } as any;
+    return order[(b.importance || "medium")] - order[(a.importance || "medium")];
+  });
 
   if (isLoading) {
     return (
@@ -125,13 +125,42 @@ export default function BudgetPage() {
         <div className="mb-8">
           <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">Table of Preference</h2>
           <div className="space-y-3">
-            {preferenceTable.length === 0 ? (
-              <p className="text-zinc-600 text-sm">No items added yet.</p>
+            {sortedWishlists.length === 0 ? (
+              <p className="text-zinc-600 text-sm">No wishlists yet.</p>
             ) : (
-              preferenceTable.map((it) => (
-                <div key={it._id} className="flex items-center justify-between p-4 rounded-2xl bg-[#161618] border border-white/5">
-                  <span className="text-sm font-medium text-white">{it.name} • {it.wishlistName}</span>
-                  <span className="text-sm font-bold text-purple-400">{it.currency} {Number(it.price).toLocaleString()} • {it.importance}</span>
+              sortedWishlists.map((w) => (
+                <div key={w._id} className="mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedWishlist(selectedWishlist === w._id ? "" : w._id)}
+                    className="flex items-center justify-between w-full p-4 rounded-2xl bg-[#161618] border border-white/5"
+                  >
+                    <span className="text-sm font-medium text-white">{w.name} • {(w.importance || "medium")}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
+                      {selectedWishlist === w._id ? (
+                        <>
+                          <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
+                        </>
+                      ) : (
+                        <>
+                          <path d="M6 12h12"/><path d="M12 6v12"/>
+                        </>
+                      )}
+                    </svg>
+                  </button>
+                  {selectedWishlist === w._id && (
+                    <div className="mt-2 space-y-2">
+                      {(w.items || []).slice().sort((a, b) => {
+                        const order = { high: 3, medium: 2, low: 1 } as any;
+                        return order[b.importance] - order[a.importance] || b.price - a.price;
+                      }).map((it) => (
+                        <div key={it._id} className="p-3 rounded-xl bg-[#101011] border border-white/5 flex items-center justify-between">
+                          <span className="text-sm text-white">{it.name} • {it.importance}</span>
+                          <span className="text-sm text-zinc-400">{w.currency} {Number(it.price).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))
             )}

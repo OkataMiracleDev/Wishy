@@ -113,16 +113,24 @@ router.post("/wallet/withdraw", async (req, res) => {
   if (idempotencyKey && (user.walletTransactions || []).find((t) => t.reference === String(idempotencyKey))) {
     return res.json({ ok: true }); // already processed
   }
-  if (Number(user.walletBalance || 0) < amt) {
+  const withdrawFeePercent = 1;
+  const fee = amt * (withdrawFeePercent / 100);
+  const totalDebit = amt + fee;
+  if (Number(user.walletBalance || 0) < totalDebit) {
     return res.status(400).json({ ok: false, error: "insufficient_funds" });
   }
-  user.walletBalance = Number(user.walletBalance || 0) - amt;
+  user.walletBalance = Number(user.walletBalance || 0) - totalDebit;
   user.walletTransactions.push({
     type: "withdraw",
     amount: amt,
     reference: idempotencyKey || `WD-${Date.now()}`,
     status: "completed",
-    meta: { to: { accountNumber: user.accountNumber, bankName: user.bankName, accountName: user.accountName } },
+    meta: { 
+      to: { accountNumber: user.accountNumber, bankName: user.bankName, accountName: user.accountName },
+      fee,
+      feePercent: withdrawFeePercent,
+      netPayout: amt
+    },
   });
   await user.save();
   return res.json({ ok: true, balance: user.walletBalance });

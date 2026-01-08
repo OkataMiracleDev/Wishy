@@ -36,7 +36,7 @@ export default function SignUpPage() {
     if (!password) return 0;
     let score = 0;
     if (password.length >= 8) score += 1;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+    if (/[!@#$%^&*(),.?":{}|<>/\\]/.test(password)) score += 1;
     return score;
   }, [password]);
 

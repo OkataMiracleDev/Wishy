@@ -90,6 +90,11 @@ export default function WalletPage() {
         <h1 className={`${cherryBombOne.className} mb-8 text-3xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400`}>
           Wallet
         </h1>
+        <div className="rounded-xl border border-white/10 bg-[#101011] p-4 mb-6">
+          <div className="text-xs text-zinc-400">
+            Deposits credit 98% after a 2% fee. Withdrawals pay out amount minus a 1% fee. Fees are shown per transaction.
+          </div>
+        </div>
         <div className="mb-8 rounded-[2rem] bg-[#161618] p-6 border border-white/5 shadow-xl">
           <div className="text-sm text-zinc-400">Current Balance</div>
           <div className="text-3xl font-bold text-white mt-2">₦ {Number(balance).toLocaleString()}</div>
@@ -127,7 +132,10 @@ export default function WalletPage() {
             ) : (
               transactions.slice().reverse().map((t, idx) => (
                 <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-[#101011] border border-white/10">
-                  <span className="text-sm font-medium text-white">{t.type} • {t.status}</span>
+                  <span className="text-sm font-medium text-white">
+                    {t.type} • {t.status}
+                    {typeof t?.meta?.fee === "number" ? ` • fee ₦${Number(t.meta.fee).toLocaleString()}` : ""}
+                  </span>
                   <span className={`text-sm font-bold ${t.type === "deposit" ? "text-green-400" : "text-red-400"}`}>{Number(t.amount).toLocaleString()}</span>
                 </div>
               ))

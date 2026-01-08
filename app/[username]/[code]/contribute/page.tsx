@@ -41,6 +41,10 @@ export default function ContributePage() {
     return w?.currency || "";
   }, [profile, wishlistId]);
 
+  useEffect(() => {
+    setItemId("");
+  }, [wishlistId]);
+
   return (
     <main className="min-h-dvh w-full bg-[#0a0a0a] text-white">
       <div className="mx-auto max-w-md px-6 py-8 sm:max-w-lg">

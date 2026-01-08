@@ -155,8 +155,11 @@ router.post("/wallet/webhook", async (req, res) => {
       return res.json({ ok: true });
     }
     tx.status = "completed";
-    tx.meta = { ...(tx.meta || {}), webhook: event };
-    user.walletBalance = Number(user.walletBalance || 0) + Number(tx.amount || 0);
+    const depositFeePercent = 2;
+    const depositFee = Number(tx.amount || 0) * (depositFeePercent / 100);
+    const netAmount = Number(tx.amount || 0) - depositFee;
+    tx.meta = { ...(tx.meta || {}), webhook: event, fee: depositFee, feePercent: depositFeePercent, netAmount };
+    user.walletBalance = Number(user.walletBalance || 0) + netAmount;
     await user.save();
     return res.json({ ok: true });
   } catch (e) {
